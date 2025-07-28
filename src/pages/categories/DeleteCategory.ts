@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_URL } from '../../lib/api';
+import { API_URL } from '../../constant';
 
 export async function deleteCategory(id: string): Promise<void> {
   
