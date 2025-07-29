@@ -2,37 +2,65 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { PlusIcon, EditIcon, TrashIcon } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card";
+import { Pagination } from "../../components/ui/Pagination";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchSubcategories, fetchCategories } from "../../lib/api";
 import EditSubcategory from "./EditSubcategory";
 import { deleteSubcategory } from "./DeleteSubcategory";
 import { useToast } from "../../components/ui/toast";
 
+interface SubcategoryApiResponse {
+  data: any[];
+  total: number;
+  totalPages: number;
+}
+
+interface CategoryApiResponse {
+  data: any[];
+  total: number;
+  totalPages: number;
+}
+
 export const SubcategoryList: React.FC = () => {
-  const { data: subcategories, isLoading, error } = useQuery({
-    queryKey: ["subcategories"],
-    queryFn: () => fetchSubcategories(),
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  const { data: subcategoryData, isLoading, error } = useQuery<SubcategoryApiResponse>({
+    queryKey: ["subcategories", currentPage, itemsPerPage],
+    queryFn: async () => {
+      const response = await fetchSubcategories({ page: currentPage, limit: itemsPerPage });
+      console.log("fetchSubcategories Response:", response);
+      return response; // Directly return the response
+    }
   });
-  const { data: categories } = useQuery({
+
+  const { data: categoryData } = useQuery<CategoryApiResponse>({
     queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryFn: () => fetchCategories(),
   });
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [editingSubcategory, setEditingSubcategory] = useState<any | null>(null);
 
+  const handlePageChange = (page: number) => {
+    const validPage = Number(page);
+    if (!Number.isFinite(validPage)) return;
+    
+    setCurrentPage(validPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    queryClient.invalidateQueries({ queryKey: ["subcategories", validPage, itemsPerPage] });
+  };
+
   const getCategoryName = (categoryId: string) => {
-    const cat = categories?.find((c: any) => c._id === categoryId);
+    const cat = categoryData?.data?.find((c: any) => c._id === categoryId);
     return cat ? cat.name : "-";
   };
 
   const handleEdit = (sub: any) => setEditingSubcategory(sub);
   const handleCancel = () => setEditingSubcategory(null);
-  const handleSave = async (data: { name: string; description?: string }) => {
-    
-
+  const handleSave = async () => {
     setEditingSubcategory(null);
-    queryClient.invalidateQueries({ queryKey: ["subcategories"] });
+    await queryClient.invalidateQueries({ queryKey: ["subcategories", currentPage, itemsPerPage] });
   };
   const handleDelete = (sub: any) => {
     showToast('Are you sure you want to delete this subcategory?', 'confirm', {
@@ -65,9 +93,15 @@ export const SubcategoryList: React.FC = () => {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             {isLoading ? (
-              <div className="p-4">Loading...</div>
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Loading subcategories...</p>
+              </div>
             ) : error ? (
-              <div className="p-4 text-red-500">Error loading subcategories</div>
+              <div className="p-8 text-center">
+                <div className="text-red-500 mb-2">⚠️ Error loading subcategories</div>
+                <p className="text-gray-500">Please try refreshing the page</p>
+              </div>
             ) : (
               <table className="w-full">
                 <thead className="bg-gray-50 border-b">
@@ -80,7 +114,14 @@ export const SubcategoryList: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {subcategories?.map((sub: any) => (
+                  {subcategoryData?.data?.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-gray-500">
+                        No subcategories found
+                      </td>
+                    </tr>
+                  ) : (
+                    subcategoryData?.data?.map((sub: any) => (
                     <tr key={sub._id} className="border-b hover:bg-gray-50">
                       <td className="p-4 font-medium text-[#1c1c1c]">{sub.name}</td>
                       <td className="p-4 text-[#979797]">{sub.description}</td>
@@ -97,12 +138,22 @@ export const SubcategoryList: React.FC = () => {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )))}
                 </tbody>
               </table>
             )}
           </div>
         </CardContent>
+        {!isLoading && !error && subcategoryData?.totalPages && Number.isFinite(subcategoryData.totalPages) && (
+          <div className="border-t">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Number(subcategoryData.totalPages)}
+              onPageChange={handlePageChange}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
       </Card>
       {editingSubcategory && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -117,4 +168,4 @@ export const SubcategoryList: React.FC = () => {
       )}
     </div>
   );
-}; 
+};

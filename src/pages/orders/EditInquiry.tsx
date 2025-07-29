@@ -7,7 +7,6 @@ interface EditInquiryProps {
   onSave: () => void;
   onCancel: () => void;
 }
-
 const EditInquiry: React.FC<EditInquiryProps> = ({ inquiry, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     userName: inquiry.userName || '',

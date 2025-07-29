@@ -1,5 +1,47 @@
 import React, { useState } from "react";
 import { X, Plus, Trash2, AlertCircle } from "lucide-react";
+
+interface ProductSpecifications {
+  material: string;
+  style: string;
+  length: string;
+  blousePiece: string;
+  designNo: string;
+}
+
+interface ProductOption {
+  color: string;
+  colorCode: string;
+  quantity: string;
+  imageUrls: string[];
+  price: string;
+}
+
+interface ProductFormData {
+  name: string;
+  category: string;
+  subcategory: string;
+  description: string;
+  fullDescription: string;
+  price: string;
+  imageUrl: string;
+  images: string[];
+  quantity: string;
+  specifications: ProductSpecifications;
+  options: ProductOption[];
+}
+
+interface CategoryApiResponse {
+  data: Array<{ _id: string; name: string }>;
+  total: number;
+  totalPages: number;
+}
+
+interface SubcategoryApiResponse {
+  data: Array<{ _id: string; name: string }>;
+  total: number;
+  totalPages: number;
+}
 import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
@@ -48,7 +90,7 @@ const COLOR_OPTIONS = [
 ];
 
 export const AddProduct: React.FC = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     category: "",
     subcategory: "",
@@ -82,19 +124,20 @@ export const AddProduct: React.FC = () => {
 
   const queryClient = useQueryClient();
   const { showToast } = useToast();
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery<CategoryApiResponse>({
     queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryFn: () => fetchCategories(),
   });
-  const { data: subcategories, isLoading: subcategoriesLoading } = useQuery({
+
+  const { data: subcategoriesResponse, isLoading: subcategoriesLoading } = useQuery<SubcategoryApiResponse>({
     queryKey: ["subcategories", formData.category],
-    queryFn: () => fetchSubcategories(formData.category),
+    queryFn: () => fetchSubcategories({ categoryId: formData.category }),
     enabled: !!formData.category,
   });
 
   const mutation = useMutation({
     mutationFn: addProduct,
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       showToast(`Product "${formData.name}" added successfully!`, 'success');
       setFormData({
@@ -382,7 +425,7 @@ export const AddProduct: React.FC = () => {
                     <SelectValue placeholder="Choose Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories?.map((cat: any) => (
+                    {categoriesResponse?.data?.map((cat) => (
                       <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -401,7 +444,7 @@ export const AddProduct: React.FC = () => {
                     <SelectValue placeholder={!formData.category ? "Select category first" : "Choose Subcategory"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {subcategories?.map((sub: any) => (
+                    {subcategoriesResponse?.data?.map((sub) => (
                       <SelectItem key={sub._id} value={sub._id}>{sub.name}</SelectItem>
                     ))}
                   </SelectContent>

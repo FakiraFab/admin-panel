@@ -38,8 +38,39 @@ const COLOR_OPTIONS = [
   { name: "Mint", code: "#81e6d9" },
 ];
 
+interface ProductOption {
+  color: string;
+  colorCode: string;
+  quantity: string;
+  imageUrls: string[];
+  price: string;
+}
+
+interface ProductSpecifications {
+  material: string;
+  style: string;
+  length: string;
+  blousePiece: string;
+  designNo: string;
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  category: { _id: string; name: string } | string;
+  subcategory: { _id: string; name: string } | string;
+  description: string;
+  fullDescription?: string;
+  price: number;
+  imageUrl: string;
+  images: string[];
+  quantity: number;
+  specifications: ProductSpecifications;
+  options: ProductOption[];
+}
+
 interface EditProductProps {
-  product: any;
+  product: Product;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -82,13 +113,26 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
 
   const queryClient = useQueryClient();
   const { showToast } = useToast();
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  interface CategoryApiResponse {
+    data: any[];
+    total: number;
+    totalPages: number;
+  }
+
+  interface SubcategoryApiResponse {
+    data: any[];
+    total: number;
+    totalPages: number;
+  }
+
+  const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery<CategoryApiResponse>({
     queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryFn: () => fetchCategories(),
   });
-  const { data: subcategories, isLoading: subcategoriesLoading } = useQuery({
+
+  const { data: subcategoriesResponse, isLoading: subcategoriesLoading } = useQuery<SubcategoryApiResponse>({
     queryKey: ["subcategories", formData.category],
-    queryFn: () => fetchSubcategories(formData.category),
+    queryFn: () => fetchSubcategories({ categoryId: formData.category }),
     enabled: !!formData.category,
   });
 
@@ -115,8 +159,8 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
     if (product) {
       setFormData({
         name: product.name || "",
-        category: product.category?._id || product.category || "",
-        subcategory: product.subcategory?._id || product.subcategory || "",
+        category: typeof product.category === 'object' ? product.category._id : product.category || "",
+        subcategory: typeof product.subcategory === 'object' ? product.subcategory._id : product.subcategory || "",
         description: product.description || "",
         fullDescription: product.fullDescription || "",
         price: product.price?.toString() || "",
@@ -400,7 +444,7 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
                       <SelectValue placeholder="Choose Category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories?.map((cat: any) => (
+                      {categoriesResponse?.data?.map((cat: any) => (
                         <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -419,7 +463,7 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
                       <SelectValue placeholder={!formData.category ? "Select category first" : "Choose Subcategory"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {subcategories?.map((sub: any) => (
+                      {subcategoriesResponse?.data?.map((sub: any) => (
                         <SelectItem key={sub._id} value={sub._id}>{sub.name}</SelectItem>
                       ))}
                     </SelectContent>
