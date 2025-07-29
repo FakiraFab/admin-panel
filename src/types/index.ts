@@ -58,6 +58,12 @@ export interface AuthState {
 }
 
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  totalPages: number;
+}
+
 export interface Enquiry {
   _id: string;
   userName: string;

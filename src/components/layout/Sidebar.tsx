@@ -53,8 +53,11 @@ export const Sidebar: React.FC = () => {
     },
     {
       icon: <FilePlusIcon className="w-6 h-6" />,
-      title: "Class Registration",
-      path: "/class-registration",
+      title: "Workshops",
+      subItems: [
+        { title: "Workshop List", path: "/class-registration" },
+        { title: "Registrations", path: "/registrations" },
+      ],
     },
     {
       icon: <ImageIcon className="w-6 h-6" />,

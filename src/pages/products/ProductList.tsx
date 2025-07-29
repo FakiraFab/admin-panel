@@ -6,18 +6,33 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchProducts, deleteProduct } from "../../lib/api";
 import { EditProduct } from "./EditProduct";
 import { useToast } from "../../components/ui/toast";
+import { Pagination } from "../../components/ui/Pagination";
 
 export const ProductList: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
+  
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
-  const { data: products, isLoading, error } = useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
+  interface ProductApiResponse {
+    data: any[];
+    total: number;
+    totalPages: number;
+  }
+
+  const { data: productData, isLoading, error } = useQuery<ProductApiResponse>({
+    queryKey: ["products", currentPage, itemsPerPage],
+    queryFn: () => fetchProducts({ page: currentPage, limit: itemsPerPage })
   });
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleEditClick = (product: any) => {
     setSelectedProduct(product);
@@ -35,7 +50,6 @@ export const ProductList: React.FC = () => {
         try {
           await deleteProduct(productId);
           showToast('Product deleted successfully!', 'success');
-          // Invalidate and refetch products after deletion
           queryClient.invalidateQueries({ queryKey: ["products"] });
         } catch (error) {
           console.error("Error deleting product:", error);
@@ -64,8 +78,6 @@ export const ProductList: React.FC = () => {
     });
   };
 
-  console.log(products);
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -92,7 +104,7 @@ export const ProductList: React.FC = () => {
                 <div className="text-red-500 mb-2">⚠️ Error loading products</div>
                 <p className="text-gray-500">Please try refreshing the page</p>
               </div>
-            ) : products?.length === 0 ? (
+            ) : productData?.data?.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-gray-500">No products found</p>
               </div>
@@ -111,7 +123,7 @@ export const ProductList: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {products?.map((product: any) => (
+                  {productData?.data?.map((product: any) => (
                     <React.Fragment key={product._id}>
                       <tr className="border-b hover:bg-gray-50">
                         {/* Image */}
@@ -319,8 +331,21 @@ export const ProductList: React.FC = () => {
             )}
           </div>
         </CardContent>
+        
+        
+        {!isLoading && !error && productData && (
+          <div className="border-t">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={productData.totalPages}
+              onPageChange={handlePageChange}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
       </Card>
 
+      {/* Edit Product Modal */}
       {selectedProduct && (
         <EditProduct
           product={selectedProduct}
@@ -328,8 +353,6 @@ export const ProductList: React.FC = () => {
           onClose={handleCloseModal}
         />
       )}
-
-
     </div>
   );
 };

@@ -17,6 +17,9 @@ import { AddCategory } from "./pages/categories/AddCategory";
 import InquiryList from "./pages/orders/InquiryList";
 import { SubcategoryList } from "./pages/subCategories/SubcategoryList";
 import { AddSubcategory } from "./pages/subCategories/AddSubcategory";
+import { Banners } from "./pages/banners/Banners";
+import { WorkshopsList } from "./pages/classRegistration/WorkshopsList";
+import { RegistrationList } from "./pages/classRegistration/RegistrationList";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -64,9 +67,10 @@ export const App: React.FC = () => {
               {/* Orders route */}
               <Route path="orders" element={<InquiryList />} />
               
-              {/* Other routes - placeholders */}
-              <Route path="class-registration" element={<div>Class Registration</div>} />
-              <Route path="banners" element={<div>Banners</div>} />
+              {/* Workshop routes */}
+              <Route path="class-registration" element={<WorkshopsList />} />
+              <Route path="registrations" element={<RegistrationList />} />
+              <Route path="banners" element={<Banners />} />
             </Route>
             
             {/* Catch all route */}

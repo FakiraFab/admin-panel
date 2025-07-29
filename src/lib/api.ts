@@ -2,23 +2,44 @@ import axios from "axios";
 
 import { API_URL } from "../constant";
 
+interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
 
-export const fetchProducts = async () => {
-  const { data } = await axios.get(`${API_URL}/products`);
-  return data.data;
+
+export const fetchProducts = async ({ page = 1, limit = 10 }: PaginationParams = {}) => {
+  const { data } = await axios.get(`${API_URL}/products`, {
+    params: { page, limit }
+  });
+  return {
+    data: data.data,
+    total: data.total,
+    totalPages: Math.ceil(data.total / limit)
+  };
 };
 
-export const fetchCategories = async () => {
-  const { data } = await axios.get(`${API_URL}/categories`);
-  return data.data;
+export const fetchCategories = async ({ page = 1, limit = 10 }: PaginationParams = {}) => {
+  const { data } = await axios.get(`${API_URL}/categories`, {
+    params: { page, limit }
+  });
+  return {
+    data: data.data,
+    total: data.pagination.total,
+    totalPages: Math.ceil(data.pagination.total / limit)
+  };
 };
 
-export const fetchSubcategories = async (categoryId?: string) => {
-  // If categoryId is provided, filter by category
-  console.log(categoryId)
+export const fetchSubcategories = async ({ page = 1, limit = 10, categoryId }: PaginationParams & { categoryId?: string } = {}) => {
   const url = categoryId ? `${API_URL}/subcategories?category=${categoryId}` : `${API_URL}/subcategories`;
-  const { data } = await axios.get(url);
-  return data.data;
+  const { data } = await axios.get(url, {
+    params: { page, limit }
+  });
+  return {
+    data: data.data, // Array of subcategories
+    total: data.pagination.total, // Use pagination.total
+    totalPages: Math.ceil(data.pagination.total / limit) // Use pagination.total
+  };
 };
 
 export const addProduct = async (product: any) => {
@@ -57,10 +78,43 @@ export const updateSubcategory = async (id: string, data: any) => {
   return res.data.data;
 };
 
+// Banner API functions
+export const fetchBanners = async ({ page = 1, limit = 10 }: PaginationParams = {}) => {
+  const { data } = await axios.get(`${API_URL}/banners`, {
+    params: { page, limit }
+  });
+  return {
+    data: data.data,
+    total: data.pagination?.total || 0,
+    totalPages: Math.ceil((data.pagination?.total || 0) / limit)
+  };
+};
+
+export const addBanner = async (banner: any) => {
+  const { data } = await axios.post(`${API_URL}/banners`, banner);
+  return data.data;
+};
+
+export const updateBanner = async (id: string, banner: any) => {
+  const { data } = await axios.patch(`${API_URL}/banners/${id}`, banner);
+  return data.data;
+};
+
+export const deleteBanner = async (id: string) => {
+  const { data } = await axios.delete(`${API_URL}/banners/${id}`);
+  return data.data;
+};
+
 // Fixed inquiry API functions to use consistent base URL
-export const fetchInquiries = async () => {
-  const response = await axios.get(`${API_URL}/inquiry`);
-  return response.data;
+export const fetchInquiries = async ({ page = 1, limit = 10 }: PaginationParams = {}): Promise<{ data: any[]; total: number; totalPages: number }> => {
+  const response = await axios.get(`${API_URL}/inquiry`, {
+    params: { page, limit }
+  });
+  return {
+    data: response.data.data || [],
+    total: response.data.total || 0,
+    totalPages: Math.ceil((response.data.total || 0) / limit)
+  };
 };
 
 export const deleteInquiry = async (id: string): Promise<void> => {
@@ -70,4 +124,48 @@ export const deleteInquiry = async (id: string): Promise<void> => {
 export const updateInquiry = async (id: string, data: any) => {
   const response = await axios.patch(`${API_URL}/inquiries/${id}`, data);
   return response.data;
+};
+
+// Workshop API functions
+export const fetchWorkshops = async ({ page = 1, limit = 10 }: PaginationParams = {}) => {
+  const { data } = await axios.get(`${API_URL}/workshop/workshops`, {
+    params: { page, limit }
+  });
+  return {
+    data: data.data,
+    total: data.pagination?.total || 0,
+    totalPages: Math.ceil((data.pagination?.total || 0) / limit)
+  };
+};
+
+export const addWorkshop = async (workshop: any) => {
+  const { data } = await axios.post(`${API_URL}/workshop/create`, workshop);
+  return data.data;
+};
+
+export const updateWorkshop = async (id: string, workshop: any) => {
+  const { data } = await axios.patch(`${API_URL}/workshop/workshops/${id}`, workshop);
+  return data.data;
+};
+
+export const deleteWorkshop = async (id: string) => {
+  const { data } = await axios.delete(`${API_URL}/workshop/workshops/${id}`);
+  return data.data;
+};
+
+// Workshop Registration API functions
+export const fetchRegistrations = async ({ page = 1, limit = 10 }: PaginationParams = {}) => {
+  const { data } = await axios.get(`${API_URL}/workshop`, {
+    params: { page, limit }
+  });
+  return {
+    data: data.data,
+    total: data.pagination?.total || 0,
+    totalPages: Math.ceil((data.pagination?.total || 0) / limit)
+  };
+};
+
+export const updateRegistration = async (id: string, status: string) => {
+  const { data } = await axios.patch(`${API_URL}/workshop/${id}`, { status });
+  return data.data;
 };

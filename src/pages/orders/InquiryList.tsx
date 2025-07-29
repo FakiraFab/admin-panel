@@ -1,16 +1,20 @@
 import { useState } from 'react';
-import { EditIcon, TrashIcon, ChevronDown, ChevronUp, Package } from 'lucide-react';
+import { EditIcon, TrashIcon, ChevronDown, ChevronUp, Package, MessageSquare } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchInquiries, deleteInquiry } from '../../lib/api';
 import { useToast } from '../../components/ui/toast';
 import type { Enquiry } from '../../types';
 import EditInquiry from './EditInquiry';
+import { Pagination } from '../../components/ui/Pagination';
 
 const InquiryList: React.FC = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
   const { data: response, isLoading, error } = useQuery({
-    queryKey: ['inquiries'],
-    queryFn: fetchInquiries,
+    queryKey: ['inquiries', currentPage, itemsPerPage],
+    queryFn: () => fetchInquiries({ page: currentPage, limit: itemsPerPage }),
   });
 
   const queryClient = useQueryClient();
@@ -200,6 +204,15 @@ const InquiryList: React.FC = () => {
                             >
                               <TrashIcon className="h-4 w-4" />
                             </button>
+                            <a
+                              href={`https://wa.me/${inquiry.whatsappNumber}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-600 hover:text-green-900 transition-colors"
+                              title="Send WhatsApp Message"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                            </a>
                           </div>
                         </td>
                       </tr>
@@ -328,6 +341,16 @@ const InquiryList: React.FC = () => {
                             <TrashIcon className="h-4 w-4 mr-1" />
                             Delete
                           </button>
+                          <a
+                            href={`https://wa.me/${inquiry.whatsappNumber}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 text-sm flex items-center rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            WhatsApp
+                          </a>
                         </div>
                       </div>
                     )}
@@ -362,6 +385,16 @@ const InquiryList: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {response?.data && response.data.length > 0 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil((response?.total || 0) / itemsPerPage)}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+        </div>
+      )}
 
       {editingInquiry && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">

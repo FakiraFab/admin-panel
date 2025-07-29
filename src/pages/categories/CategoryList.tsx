@@ -7,15 +7,25 @@ import { fetchCategories } from "../../lib/api";
 import EditCategory from "./EditCategory";
 import { deleteCategory } from "./DeleteCategory";
 import { useToast } from "../../components/ui/toast";
+import { Pagination } from "../../components/ui/Pagination";
 
 export const CategoryList: React.FC = () => {
-  const { data: categories, isLoading, error } = useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchCategories,
-  });
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  interface CategoryApiResponse {
+    data: any[];
+    total: number;
+    totalPages: number;
+  }
+
+  const { data: categoryData, isLoading, error } = useQuery<CategoryApiResponse>({
+    queryKey: ["categories", currentPage, itemsPerPage],
+    queryFn: () => fetchCategories({ page: currentPage, limit: itemsPerPage })
+  });
 
   const handleEdit = (category: any) => setEditingCategory(category);
   const handleCancel = () => setEditingCategory(null);
@@ -38,6 +48,14 @@ export const CategoryList: React.FC = () => {
     });
   };
 
+  const handlePageChange = async (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top with smooth behavior
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Invalidate the query to force a fresh fetch for the new page
+    await queryClient.invalidateQueries({ queryKey: ["categories", page, itemsPerPage] });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -55,9 +73,19 @@ export const CategoryList: React.FC = () => {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             {isLoading ? (
-              <div className="p-4">Loading...</div>
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Loading categories...</p>
+              </div>
             ) : error ? (
-              <div className="p-4 text-red-500">Error loading categories</div>
+              <div className="p-8 text-center">
+                <div className="text-red-500 mb-2">⚠️ Error loading categories</div>
+                <p className="text-gray-500">Please try refreshing the page</p>
+              </div>
+            ) : categoryData?.data?.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-gray-500">No categories found</p>
+              </div>
             ) : (
               <table className="w-full">
                 <thead className="bg-gray-50 border-b">
@@ -70,7 +98,7 @@ export const CategoryList: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {categories?.map((category: any) => (
+                  {categoryData?.data?.map((category: any) => (
                     <tr key={category._id} className="border-b hover:bg-gray-50">
                       <td className="p-4">
                         {category.categoryImage ? (
@@ -117,6 +145,16 @@ export const CategoryList: React.FC = () => {
             )}
           </div>
         </CardContent>
+        {!isLoading && !error && categoryData && (
+          <div className="border-t">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={categoryData.totalPages}
+              onPageChange={handlePageChange}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
       </Card>
       
       {editingCategory && (
