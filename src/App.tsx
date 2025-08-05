@@ -20,6 +20,8 @@ import { AddSubcategory } from "./pages/subCategories/AddSubcategory";
 import { Banners } from "./pages/banners/Banners";
 import { WorkshopsList } from "./pages/classRegistration/WorkshopsList";
 import { RegistrationList } from "./pages/classRegistration/RegistrationList";
+import { ReelsList } from "./pages/reels/ReelsList";
+import { AddReel } from "./pages/reels/AddReel";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -71,6 +73,10 @@ export const App: React.FC = () => {
               <Route path="class-registration" element={<WorkshopsList />} />
               <Route path="registrations" element={<RegistrationList />} />
               <Route path="banners" element={<Banners />} />
+              
+              {/* Reels routes */}
+              <Route path="reels" element={<ReelsList />} />
+              <Route path="reels/add" element={<AddReel />} />
             </Route>
             
             {/* Catch all route */}
