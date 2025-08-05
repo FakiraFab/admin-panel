@@ -169,3 +169,35 @@ export const updateRegistration = async (id: string, status: string) => {
   const { data } = await axios.patch(`${API_URL}/workshop/${id}`, { status });
   return data.data;
 };
+
+// Reels API functions
+export const fetchReels = async ({ page = 1, limit = 10 }: PaginationParams = {}) => {
+  const { data } = await axios.get(`${API_URL}/reels`, {
+    params: { page, limit }
+  });
+  return {
+    data: data.data,
+    total: data.totalItems || 0,
+    totalPages: Math.ceil((data.totalItems || 0) / limit)
+  };
+};
+
+export const addReel = async (reel: any) => {
+  const { data } = await axios.post(`${API_URL}/reels`, reel);
+  return data.data;
+};
+
+export const updateReel = async (id: string, reel: any) => {
+  const { data } = await axios.patch(`${API_URL}/reels/${id}`, reel);
+  return data.data;
+};
+
+export const deleteReel = async (id: string) => {
+  const { data } = await axios.delete(`${API_URL}/reels/${id}`);
+  return data.data;
+};
+
+export const toggleReelVisibility = async (id: string) => {
+  const { data } = await axios.patch(`${API_URL}/reels/${id}/toggle-visibility`);
+  return data.data;
+};
