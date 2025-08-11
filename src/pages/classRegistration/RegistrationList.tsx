@@ -17,6 +17,13 @@ interface Registration {
   status: 'Pending' | 'Approved' | 'Rejected';
   specialRequirements?: string;
   createdAt: string;
+  updatedAt: string;
+  workshopId: {
+    _id: string;
+    name: string;
+    dateTime: string;
+    location: string;
+  };
 }
 
 export const RegistrationList: React.FC = () => {
@@ -28,21 +35,27 @@ export const RegistrationList: React.FC = () => {
 
   const { data: registrationData, isLoading } = useQuery({
     queryKey: ['registrations', currentPage],
-    queryFn: () => fetchRegistrations({ page: currentPage, limit: itemsPerPage })
+    queryFn: () => fetchRegistrations({ page: currentPage, limit: itemsPerPage }),
   });
 
+
+
   const updateMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => updateRegistration(id, status),
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      updateRegistration(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['registrations'] });
       showToast('Registration status updated successfully!', 'success');
     },
     onError: (error: any) => {
       showToast(error.message || 'Failed to update registration status', 'error');
-    }
+    },
   });
 
-  const handleStatusChange = (registration: Registration, newStatus: 'Approved' | 'Rejected') => {
+  const handleStatusChange = (
+    registration: Registration,
+    newStatus: 'Approved' | 'Rejected'
+  ) => {
     updateMutation.mutate({ id: registration._id, status: newStatus });
   };
 
@@ -62,10 +75,27 @@ export const RegistrationList: React.FC = () => {
     }
   };
 
+  // Format dateTime to a readable format
+  const formatDateTime = (dateTime: string) => {
+    return new Date(dateTime).toLocaleString('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#1c1c1c]">Workshop Registrations</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-[#1c1c1c]">
+            Workshop Registrations
+          </h1>
+          {registrationData?.total !== undefined && (
+            <p className="text-sm text-gray-500 mt-1">
+              Total registrations: {registrationData.total}
+            </p>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -118,7 +148,13 @@ export const RegistrationList: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{registration.workshopName}</div>
+                        <div className="text-sm text-gray-900">
+                          {registration.workshopName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {formatDateTime(registration.workshopId.dateTime)} •{' '}
+                          {registration.workshopId.location}
+                        </div>
                         {registration.specialRequirements && (
                           <div className="text-sm text-gray-500">
                             Note: {registration.specialRequirements}
@@ -126,11 +162,19 @@ export const RegistrationList: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{registration.email}</div>
-                        <div className="text-sm text-gray-500">{registration.contactNumber}</div>
+                        <div className="text-sm text-gray-900">
+                          {registration.email}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {registration.contactNumber}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(registration.status)}`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                            registration.status
+                          )}`}
+                        >
                           {registration.status}
                         </span>
                       </td>
@@ -138,13 +182,17 @@ export const RegistrationList: React.FC = () => {
                         {registration.status === 'Pending' && (
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleStatusChange(registration, 'Approved')}
+                              onClick={() =>
+                                handleStatusChange(registration, 'Approved')
+                              }
                               className="text-sm text-green-600 hover:text-green-900"
                             >
                               Approve
                             </button>
                             <button
-                              onClick={() => handleStatusChange(registration, 'Rejected')}
+                              onClick={() =>
+                                handleStatusChange(registration, 'Rejected')
+                              }
                               className="text-sm text-red-600 hover:text-red-900"
                             >
                               Reject
@@ -159,11 +207,11 @@ export const RegistrationList: React.FC = () => {
             )}
           </div>
         </CardContent>
-        {registrationData?.totalPages && registrationData.totalPages > 1 && (
+        {registrationData?.data && registrationData.data.length > 0 && (
           <div className="border-t">
             <Pagination
               currentPage={currentPage}
-              totalPages={registrationData.totalPages}
+              totalPages={registrationData.totalPages || 1}
               onPageChange={handlePageChange}
               isLoading={isLoading}
             />

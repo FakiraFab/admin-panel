@@ -36,7 +36,7 @@ export const AddSubcategory: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery<CategoryApiResponse>({
     queryKey: ["categories"],
-    queryFn: () => fetchCategories(),
+    queryFn: () => fetchCategories({ limit: 1000 }), // Fetch all categories with high limit
   });
 
   const mutation = useMutation({

@@ -126,12 +126,12 @@ export const AddProduct: React.FC = () => {
   const { showToast } = useToast();
   const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery<CategoryApiResponse>({
     queryKey: ["categories"],
-    queryFn: () => fetchCategories(),
+    queryFn: () => fetchCategories({ limit: 1000 }), // Fetch all categories with high limit
   });
 
   const { data: subcategoriesResponse, isLoading: subcategoriesLoading } = useQuery<SubcategoryApiResponse>({
     queryKey: ["subcategories", formData.category],
-    queryFn: () => fetchSubcategories({ categoryId: formData.category }),
+    queryFn: () => fetchSubcategories({ categoryId: formData.category, limit: 1000 }), // Fetch all subcategories with high limit
     enabled: !!formData.category,
   });
 
