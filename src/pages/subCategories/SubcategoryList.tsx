@@ -36,7 +36,7 @@ export const SubcategoryList: React.FC = () => {
 
   const { data: categoryData } = useQuery<CategoryApiResponse>({
     queryKey: ["categories"],
-    queryFn: () => fetchCategories(),
+    queryFn: () => fetchCategories({ limit: 1000 }), // Fetch all categories with high limit
   });
   const queryClient = useQueryClient();
   const { showToast } = useToast();

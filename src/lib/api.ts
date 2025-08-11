@@ -133,8 +133,9 @@ export const fetchWorkshops = async ({ page = 1, limit = 10 }: PaginationParams 
   });
   return {
     data: data.data,
-    total: data.pagination?.total || 0,
-    totalPages: Math.ceil((data.pagination?.total || 0) / limit)
+    totalPages: data.pagination?.pages || Math.ceil((data.pagination?.total || 0) / limit),
+    pagination: data.pagination
+    
   };
 };
 
@@ -161,12 +162,14 @@ export const fetchRegistrations = async ({ page = 1, limit = 10 }: PaginationPar
   return {
     data: data.data,
     total: data.pagination?.total || 0,
-    totalPages: Math.ceil((data.pagination?.total || 0) / limit)
+    totalPages: data.pagination?.pages || Math.ceil((data.pagination?.total || 0) / limit),
+    pagination: data.pagination
   };
 };
 
 export const updateRegistration = async (id: string, status: string) => {
   const { data } = await axios.patch(`${API_URL}/workshop/${id}`, { status });
+  console.log(data.data)
   return data.data;
 };
 

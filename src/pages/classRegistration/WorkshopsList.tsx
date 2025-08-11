@@ -137,11 +137,11 @@ export const WorkshopsList: React.FC = () => {
             )}
           </div>
         </CardContent>
-        {workshopData?.totalPages && workshopData.totalPages > 1 && (
+        {workshopData?.data && workshopData.data.length > 0 && (
           <div className="border-t">
             <Pagination
               currentPage={currentPage}
-              totalPages={workshopData.totalPages}
+              totalPages={workshopData.totalPages||1}
               onPageChange={handlePageChange}
               isLoading={isLoading}
             />
