@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, Plus, Trash2, AlertCircle } from "lucide-react";
+import ImageGuidelinesModal from '../../components/ui/ImageGuidelinesModal';
 
 interface ProductSpecifications {
   material: string;
@@ -121,6 +122,7 @@ export const AddProduct: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -506,7 +508,16 @@ export const AddProduct: React.FC = () => {
             <h2 className="text-xl font-semibold mb-4 text-gray-800">Product Images</h2>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Primary Image URL *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                Primary Image URL *
+                <button
+                  type="button"
+                  className="text-xs text-blue-600 underline hover:text-blue-800"
+                  onClick={() => setIsGuidelinesOpen(true)}
+                >
+                  View Image Guidelines
+                </button>
+              </label>
               <Input 
                 value={formData.imageUrl} 
                 onChange={e => handleInputChange("imageUrl", e.target.value)}
@@ -516,19 +527,22 @@ export const AddProduct: React.FC = () => {
               {errors.imageUrl && <p className="text-red-500 text-sm mt-1 flex items-center gap-1"><AlertCircle size={16} />{errors.imageUrl}</p>}
               {formData.imageUrl && (
                 <div className="mt-2">
-                  <p className="text-sm text-gray-600 mb-1">Image Preview:</p>
+                  <p className="text-sm text-gray-600 mb-1">Image Preview (as shown in product card):</p>
                   {imageErrors.primary ? (
                     <p className="text-red-500 text-sm flex items-center gap-1">
                       <AlertCircle size={16} />
                       Failed to load image
                     </p>
                   ) : (
-                    <img
-                      src={formData.imageUrl}
-                      alt="Primary image preview"
-                      className="max-w-[200px] h-auto rounded border border-gray-200"
-                      onError={() => handleImageError("primary")}
-                    />
+                    <div className="w-full max-w-[250px] aspect-square bg-gray-100 rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={formData.imageUrl}
+                        alt="Primary image preview"
+                        className="w-full h-full object-cover"
+                        style={{ aspectRatio: '1/1' }}
+                        onError={() => handleImageError("primary")}
+                      />
+                    </div>
                   )}
                 </div>
               )}
@@ -571,12 +585,15 @@ export const AddProduct: React.FC = () => {
                             Failed to load image
                           </p>
                         ) : (
-                          <img
-                            src={img}
-                            alt={`Additional image ${idx + 1} preview`}
-                            className="max-w-[150px] h-auto rounded border border-gray-200"
-                            onError={() => handleImageError(`image_${idx}`)}
-                          />
+                          <div className="w-full max-w-[250px] aspect-square bg-gray-100 rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden">
+                            <img
+                              src={img}
+                              alt={`Additional image ${idx + 1} preview`}
+                              className="w-full h-full object-cover"
+                              style={{ aspectRatio: '1/1' }}
+                              onError={() => handleImageError(`image_${idx}`)}
+                            />
+                          </div>
                         )}
                       </div>
                     )}
@@ -738,12 +755,15 @@ export const AddProduct: React.FC = () => {
                                   Failed to load image
                                 </p>
                               ) : (
-                                <img
-                                  src={img}
-                                  alt={`Variant ${idx + 1} image ${imgIdx + 1} preview`}
-                                  className="max-w-[150px] h-auto rounded border border-gray-200"
-                                  onError={() => handleImageError(`option_${idx}_${imgIdx}`)}
-                                />
+                                <div className="w-full max-w-[250px] aspect-square bg-gray-100 rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden">
+                                  <img
+                                    src={img}
+                                    alt={`Variant ${idx + 1} image ${imgIdx + 1} preview`}
+                                    className="w-full h-full object-cover"
+                                    style={{ aspectRatio: '1/1' }}
+                                    onError={() => handleImageError(`option_${idx}_${imgIdx}`)}
+                                  />
+                                </div>
                               )}
                             </div>
                           )}
@@ -775,6 +795,7 @@ export const AddProduct: React.FC = () => {
             </p>
           </div>
         )}
+        <ImageGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} />
       </form>
     </div>
   );
