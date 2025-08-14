@@ -13,6 +13,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchCategories, fetchSubcategories, updateProduct } from "../../lib/api";
 import { useToast } from "../../components/ui/toast";
+import ImageGuidelinesModal from '../../components/ui/ImageGuidelinesModal';
 
 // Color options matching AddProduct.tsx
 const COLOR_OPTIONS = [
@@ -110,6 +111,7 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -525,7 +527,16 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
               <h2 className="text-xl font-semibold mb-4 text-gray-800">Product Images</h2>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Image URL *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  Primary Image URL *
+                  <button
+                    type="button"
+                    className="text-xs text-blue-600 underline hover:text-blue-800"
+                    onClick={() => setIsGuidelinesOpen(true)}
+                  >
+                    View Image Guidelines
+                  </button>
+                </label>
                 <Input 
                   value={formData.imageUrl} 
                   onChange={e => handleInputChange("imageUrl", e.target.value)}
@@ -542,12 +553,15 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
                         Failed to load image
                       </p>
                     ) : (
-                      <img
-                        src={formData.imageUrl}
-                        alt="Primary image preview"
-                        className="max-w-[200px] h-auto rounded border border-gray-200"
-                        onError={() => handleImageError("primary")}
-                      />
+                      <div className="w-full max-w-[200px] aspect-square bg-gray-100 rounded border border-gray-200 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={formData.imageUrl}
+                          alt="Primary image preview"
+                          className="w-full h-full object-cover"
+                          style={{ aspectRatio: '1/1' }}
+                          onError={() => handleImageError("primary")}
+                        />
+                      </div>
                     )}
                   </div>
                 )}
@@ -592,12 +606,15 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
                               Failed to load image
                             </p>
                           ) : (
-                            <img
-                              src={img}
-                              alt={`Additional image ${idx + 1} preview`}
-                              className="max-w-[150px] h-auto rounded border border-gray-200"
-                              onError={() => handleImageError(`image_${idx}`)}
-                            />
+                            <div className="w-full max-w-[150px] aspect-square bg-gray-100 rounded border border-gray-200 flex items-center justify-center overflow-hidden">
+                              <img
+                                src={img}
+                                alt={`Additional image ${idx + 1} preview`}
+                                className="w-full h-full object-cover"
+                                style={{ aspectRatio: '1/1' }}
+                                onError={() => handleImageError(`image_${idx}`)}
+                              />
+                            </div>
                           )}
                         </div>
                       )}
@@ -806,6 +823,7 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
               </p>
             </div>
           )}
+          <ImageGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} />
         </form>
       </div>
     </div>

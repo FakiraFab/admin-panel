@@ -180,7 +180,7 @@ export const ReelsList: React.FC = () => {
             )}
           </div>
         </CardContent>
-        {!isLoading && !error && reelData && (
+        {!isLoading && !error && reelData && reelData.totalPages > 0 && (
           <div className="border-t">
             <Pagination
               currentPage={currentPage}

@@ -386,11 +386,11 @@ const InquiryList: React.FC = () => {
         </CardContent>
       </Card>
 
-      {response?.data && response.data.length > 0 && (
+      {response?.totalPages && response.totalPages > 0 && (
         <div className="mt-4 flex justify-center">
           <Pagination
             currentPage={currentPage}
-            totalPages={Math.ceil((response?.total || 0) / itemsPerPage)}
+            totalPages={response.totalPages}
             onPageChange={(page) => setCurrentPage(page)}
           />
         </div>

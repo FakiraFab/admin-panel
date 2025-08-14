@@ -4,6 +4,7 @@ import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addCategory } from "../../lib/api";
+import ImageGuidelinesModal from '../../components/ui/ImageGuidelinesModal';
 
 
 export const AddCategory: React.FC = () => {
@@ -30,6 +31,8 @@ export const AddCategory: React.FC = () => {
     e.preventDefault();
     mutation.mutate(formData);
   };
+
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -63,8 +66,15 @@ export const AddCategory: React.FC = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-black tracking-[0.01px]">
+              <label className="text-xs font-semibold text-black tracking-[0.01px] flex items-center gap-2">
                 Category Image URL
+                <button
+                  type="button"
+                  className="text-xs text-blue-600 underline hover:text-blue-800"
+                  onClick={() => setIsGuidelinesOpen(true)}
+                >
+                  View Image Guidelines
+                </button>
               </label>
               <Input
                 className="h-12 pl-6 rounded-xl border border-[#dadada]"
@@ -73,7 +83,14 @@ export const AddCategory: React.FC = () => {
                 onChange={(e) => handleInputChange("categoryImage", e.target.value)}
               />
               {formData.categoryImage && (
-                <img src={formData.categoryImage} alt="Preview" className="w-full h-full rounded-xl object-cover border border-gray-200" />
+                <div className="w-full max-w-[200px] aspect-square bg-gray-100 rounded-xl object-cover border border-gray-200 mt-2 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={formData.categoryImage}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                    style={{ aspectRatio: '1/1' }}
+                  />
+                </div>
               )}
             </div>
 
@@ -83,6 +100,7 @@ export const AddCategory: React.FC = () => {
             >
               Add Category
             </button>
+            <ImageGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} />
           </form>
         </CardContent>
       </Card>

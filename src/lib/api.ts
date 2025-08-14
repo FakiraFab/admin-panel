@@ -106,14 +106,30 @@ export const deleteBanner = async (id: string) => {
 };
 
 // Fixed inquiry API functions to use consistent base URL
-export const fetchInquiries = async ({ page = 1, limit = 10 }: PaginationParams = {}): Promise<{ data: any[]; total: number; totalPages: number }> => {
+export const fetchInquiries = async (
+  { page = 1, limit = 10 }: PaginationParams = {}
+): Promise<{ data: any[]; total: number; totalPages: number }> => {
   const response = await axios.get(`${API_URL}/inquiry`, {
     params: { page, limit }
   });
+  const resData = response.data || {};
+  const pagination = resData.pagination || {};
+  const total: number =
+    typeof pagination.total === 'number'
+      ? pagination.total
+      : typeof resData.total === 'number'
+        ? resData.total
+        : typeof resData.totalItems === 'number'
+          ? resData.totalItems
+          : 0;
+  const totalPages: number =
+    typeof pagination.pages === 'number' && pagination.pages > 0
+      ? pagination.pages
+      : Math.ceil((total || 0) / limit);
   return {
-    data: response.data.data || [],
-    total: response.data.total || 0,
-    totalPages: Math.ceil((response.data.total || 0) / limit)
+    data: resData.data || [],
+    total,
+    totalPages
   };
 };
 
@@ -178,10 +194,23 @@ export const fetchReels = async ({ page = 1, limit = 10 }: PaginationParams = {}
   const { data } = await axios.get(`${API_URL}/reels`, {
     params: { page, limit }
   });
+  const pagination = data.pagination || {};
+  const total: number =
+    typeof pagination.total === 'number'
+      ? pagination.total
+      : typeof data.total === 'number'
+        ? data.total
+        : typeof data.totalItems === 'number'
+          ? data.totalItems
+          : 0;
+  const totalPages: number =
+    typeof pagination.pages === 'number' && pagination.pages > 0
+      ? pagination.pages
+      : Math.ceil((total || 0) / limit);
   return {
     data: data.data,
-    total: data.totalItems || 0,
-    totalPages: Math.ceil((data.totalItems || 0) / limit)
+    total,
+    totalPages
   };
 };
 

@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchBanners, addBanner, updateBanner, deleteBanner } from '../../lib/api';
 import { useToast } from '../../components/ui/toast';
 import { Pagination } from '../../components/ui/Pagination';
+import ImageGuidelinesModal from '../../components/ui/ImageGuidelinesModal';
 
 interface BannerForm {
   title: string;
@@ -32,6 +33,7 @@ export const Banners: React.FC = () => {
     isActive: true
   });
   const [errors, setErrors] = useState<BannerErrors>({});
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -295,8 +297,15 @@ export const Banners: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                   Image URL
+                  <button
+                    type="button"
+                    className="text-xs text-blue-600 underline hover:text-blue-800"
+                    onClick={() => setIsGuidelinesOpen(true)}
+                  >
+                    View Image Guidelines
+                  </button>
                 </label>
                 <Input
                   value={formData.image}
@@ -318,12 +327,15 @@ export const Banners: React.FC = () => {
                         Failed to load image
                       </p>
                     ) : (
-                      <img
-                        src={formData.image}
-                        alt="Banner preview"
-                        className="max-h-48 rounded border border-gray-200"
-                        onError={handleImageError}
-                      />
+                      <div className="w-full max-w-[320px] aspect-[16/9] bg-gray-100 rounded border border-gray-200 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={formData.image}
+                          alt="Banner preview"
+                          className="w-full h-full object-cover"
+                          style={{ aspectRatio: '16/9' }}
+                          onError={handleImageError}
+                        />
+                      </div>
                     )}
                   </div>
                 )}
@@ -377,6 +389,7 @@ export const Banners: React.FC = () => {
                 </button>
               </div>
             </form>
+            <ImageGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} />
           </div>
         </div>
       )}
