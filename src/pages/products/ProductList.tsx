@@ -183,12 +183,12 @@ export const ProductList: React.FC = () => {
                         <td className="p-4">
                           <div className="space-y-1">
                             <p className="font-semibold text-[#1c1c1c] text-sm">
-                              ${product.price?.toFixed(2) || 'N/A'}
+                              ₹{product.price?.toFixed(2) || 'N/A'}
                             </p>
                             {product.options && product.options.length > 0 && (
                               <p className="text-xs text-[#979797]">
-                                Variants: ${Math.min(...product.options.map((opt: any) => opt.price || 0)).toFixed(2)} - 
-                                ${Math.max(...product.options.map((opt: any) => opt.price || 0)).toFixed(2)}
+                                Variants: ₹{Math.min(...product.options.map((opt: any) => opt.price || 0)).toFixed(2)} - 
+                                {Math.max(...product.options.map((opt: any) => opt.price || 0)).toFixed(2)}
                               </p>
                             )}
                           </div>
@@ -198,7 +198,7 @@ export const ProductList: React.FC = () => {
                         <td className="p-4">
                           <div className="space-y-1">
                             <p className="font-medium text-[#1c1c1c] text-sm">
-                              {product.quantity || 0}
+                              {product.quantity || 0} {product.unit || 'meter'}
                             </p>
                             <div className={`inline-block px-2 py-1 rounded-full text-xs ${
                               (product.quantity || 0) > 20 
@@ -288,7 +288,7 @@ export const ProductList: React.FC = () => {
                                           {option.color || `Variant ${index + 1}`}
                                         </span>
                                         <span className="text-sm font-semibold text-green-600">
-                                          ${option.price?.toFixed(2) || 'N/A'}
+                                          ₹{option.price?.toFixed(2) || 'N/A'}
                                         </span>
                                       </div>
                                       <div className="flex items-center justify-between text-xs text-[#979797]">

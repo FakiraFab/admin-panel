@@ -28,6 +28,7 @@ interface ProductFormData {
   imageUrl: string;
   images: string[];
   quantity: string;
+  unit: string;
   specifications: ProductSpecifications;
   options: ProductOption[];
 }
@@ -101,6 +102,7 @@ export const AddProduct: React.FC = () => {
     imageUrl: "",
     images: [""],
     quantity: "",
+    unit: "meter",
     specifications: {
       material: "Cotton",
       style: "Traditional",
@@ -145,16 +147,17 @@ export const AddProduct: React.FC = () => {
       setFormData({
         name: "",
         category: "",
-        subcategory: "",
+        subcategory: "", 
         description: "",
         fullDescription: "",
         price: "",
         imageUrl: "",
         images: [""],
         quantity: "",
+        unit: "meter", // Added missing unit field
         specifications: {
           material: "Cotton",
-          style: "Traditional",
+          style: "Traditional", 
           length: "6 meters",
           blousePiece: "Yes",
           designNo: "",
@@ -320,6 +323,10 @@ export const AddProduct: React.FC = () => {
     if (!formData.price || Number(formData.price) <= 0) newErrors.price = "Valid price is required";
     if (!formData.imageUrl.trim()) newErrors.imageUrl = "Primary image URL is required";
     if (!formData.quantity || Number(formData.quantity) <= 0) newErrors.quantity = "Valid quantity is required";
+    if (!formData.unit) newErrors.unit = "Unit is required";
+    if (formData.unit && !['piece', 'meter'].includes(formData.unit)) {
+      newErrors.unit = "Unit must be either piece or meter";
+    }
 
     formData.options.forEach((option, idx) => {
       if (!option.color) newErrors[`option_${idx}_color`] = "Color is required";
@@ -476,6 +483,22 @@ export const AddProduct: React.FC = () => {
                   placeholder="0"
                 />
                 {errors.quantity && <p className="text-red-500 text-sm mt-1 flex items-center gap-1"><AlertCircle size={16} />{errors.quantity}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Unit *</label>
+                <Select 
+                  value={formData.unit}
+                  onValueChange={value => handleInputChange("unit", value)}
+                >
+                  <SelectTrigger className={errors.unit ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="piece">Piece</SelectItem>
+                    <SelectItem value="meter">Meter</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.unit && <p className="text-red-500 text-sm mt-1 flex items-center gap-1"><AlertCircle size={16} />{errors.unit}</p>}
               </div>
             </div>
 
