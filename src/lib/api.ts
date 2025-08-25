@@ -138,7 +138,7 @@ export const deleteInquiry = async (id: string): Promise<void> => {
 };
 
 export const updateInquiry = async (id: string, data: any) => {
-  const response = await axios.patch(`${API_URL}/inquiries/${id}`, data);
+  const response = await axios.patch(`${API_URL}/inquiry/${id}`, data);
   return response.data;
 };
 

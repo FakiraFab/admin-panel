@@ -24,13 +24,13 @@ interface ProductFormData {
   subcategory: string;
   description: string;
   fullDescription: string;
-  price: string;
+  price: number | string;
   imageUrl: string;
   images: string[];
-  quantity: string;
+  quantity: number | string;
   unit: string;
   specifications: ProductSpecifications;
-  options: ProductOption[];
+  options?: ProductOption[];
 }
 
 interface CategoryApiResponse {
@@ -44,6 +44,7 @@ interface SubcategoryApiResponse {
   total: number;
   totalPages: number;
 }
+
 import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
@@ -64,8 +65,6 @@ declare global {
     cloudinary: any;
   }
 }
-
-
 
 // Enhanced color options with proper color codes
 const COLOR_OPTIONS = [
@@ -110,15 +109,7 @@ export const AddProduct: React.FC = () => {
       blousePiece: "Yes",
       designNo: "",
     },
-    options: [
-      {
-        color: "",
-        colorCode: "",
-        quantity: "",
-        imageUrls: [""],
-        price: "",
-      },
-    ],
+    options: [],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -130,12 +121,12 @@ export const AddProduct: React.FC = () => {
   const { showToast } = useToast();
   const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery<CategoryApiResponse>({
     queryKey: ["categories"],
-    queryFn: () => fetchCategories({ limit: 1000 }), // Fetch all categories with high limit
+    queryFn: () => fetchCategories({ limit: 1000 }),
   });
 
   const { data: subcategoriesResponse, isLoading: subcategoriesLoading } = useQuery<SubcategoryApiResponse>({
     queryKey: ["subcategories", formData.category],
-    queryFn: () => fetchSubcategories({ categoryId: formData.category, limit: 1000 }), // Fetch all subcategories with high limit
+    queryFn: () => fetchSubcategories({ categoryId: formData.category, limit: 1000 }),
     enabled: !!formData.category,
   });
 
@@ -147,30 +138,22 @@ export const AddProduct: React.FC = () => {
       setFormData({
         name: "",
         category: "",
-        subcategory: "", 
+        subcategory: "",
         description: "",
         fullDescription: "",
         price: "",
         imageUrl: "",
         images: [""],
         quantity: "",
-        unit: "meter", // Added missing unit field
+        unit: "meter",
         specifications: {
           material: "Cotton",
-          style: "Traditional", 
+          style: "Traditional",
           length: "6 meters",
           blousePiece: "Yes",
           designNo: "",
         },
-        options: [
-          {
-            color: "",
-            colorCode: "",
-            quantity: "",
-            imageUrls: [""],
-            price: "",
-          },
-        ],
+        options: [],
       });
       setErrors({});
       setImageErrors({});
@@ -206,23 +189,26 @@ export const AddProduct: React.FC = () => {
 
   const handleOptionChange = (index: number, field: string, value: any) => {
     setFormData(prev => {
-      const newOptions = [...prev.options];
+      const newOptions = [...prev.options!];
       newOptions[index] = { ...newOptions[index], [field]: value };
-      
+
       if (field === "color") {
         const colorOption = COLOR_OPTIONS.find(c => c.name === value);
         if (colorOption) {
           newOptions[index].colorCode = colorOption.code;
         }
       }
-      
+
       return { ...prev, options: newOptions };
     });
+    if (errors[`option_${index}_${field}`]) {
+      setErrors(prev => ({ ...prev, [`option_${index}_${field}`]: "" }));
+    }
   };
 
   const handleOptionImageChange = (optionIdx: number, imgIdx: number, value: string) => {
     setFormData(prev => {
-      const newOptions = [...prev.options];
+      const newOptions = [...prev.options!];
       const newImageUrls = [...newOptions[optionIdx].imageUrls];
       newImageUrls[imgIdx] = value;
       newOptions[optionIdx].imageUrls = newImageUrls;
@@ -248,28 +234,35 @@ export const AddProduct: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       options: [
-        ...prev.options,
+        ...(prev.options || []),
         { color: "", colorCode: "", quantity: "", imageUrls: [""], price: "" },
       ],
     }));
   };
 
   const removeOption = (index: number) => {
-    if (formData.options.length > 1) {
-      setFormData(prev => ({
-        ...prev,
-        options: prev.options.filter((_, idx) => idx !== index),
-      }));
-      setImageErrors(prev => {
-        const newErrors = { ...prev };
-        Object.keys(newErrors).forEach(key => {
-          if (key.startsWith(`option_${index}_`)) {
-            delete newErrors[key];
-          }
-        });
-        return newErrors;
+    setFormData(prev => ({
+      ...prev,
+      options: prev.options!.filter((_, idx) => idx !== index),
+    }));
+    setImageErrors(prev => {
+      const newErrors = { ...prev };
+      Object.keys(newErrors).forEach(key => {
+        if (key.startsWith(`option_${index}_`)) {
+          delete newErrors[key];
+        }
       });
-    }
+      return newErrors;
+    });
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      Object.keys(newErrors).forEach(key => {
+        if (key.startsWith(`option_${index}_`)) {
+          delete newErrors[key];
+        }
+      });
+      return newErrors;
+    });
   };
 
   const addImage = () => {
@@ -292,7 +285,7 @@ export const AddProduct: React.FC = () => {
 
   const addOptionImage = (optionIdx: number) => {
     setFormData(prev => {
-      const newOptions = [...prev.options];
+      const newOptions = [...prev.options!];
       newOptions[optionIdx].imageUrls = [...newOptions[optionIdx].imageUrls, ""];
       return { ...prev, options: newOptions };
     });
@@ -300,7 +293,7 @@ export const AddProduct: React.FC = () => {
 
   const removeOptionImage = (optionIdx: number, imgIdx: number) => {
     setFormData(prev => {
-      const newOptions = [...prev.options];
+      const newOptions = [...prev.options!];
       if (newOptions[optionIdx].imageUrls.length > 1) {
         newOptions[optionIdx].imageUrls = newOptions[optionIdx].imageUrls.filter((_, idx) => idx !== imgIdx);
       }
@@ -315,23 +308,30 @@ export const AddProduct: React.FC = () => {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) newErrors.name = "Product name is required";
     if (!formData.category) newErrors.category = "Category is required";
     if (!formData.subcategory) newErrors.subcategory = "Subcategory is required";
     if (!formData.description.trim()) newErrors.description = "Description is required";
     if (!formData.price || Number(formData.price) <= 0) newErrors.price = "Valid price is required";
-    if (!formData.imageUrl.trim()) newErrors.imageUrl = "Primary image URL is required";
     if (!formData.quantity || Number(formData.quantity) <= 0) newErrors.quantity = "Valid quantity is required";
     if (!formData.unit) newErrors.unit = "Unit is required";
     if (formData.unit && !['piece', 'meter'].includes(formData.unit)) {
       newErrors.unit = "Unit must be either piece or meter";
     }
+    if (!formData.imageUrl.trim() && !formData.images.some(img => img.trim())) {
+      newErrors.imageUrl = "At least one image (primary or additional) is required";
+    }
 
-    formData.options.forEach((option, idx) => {
-      if (!option.color) newErrors[`option_${idx}_color`] = "Color is required";
-      if (!option.quantity || Number(option.quantity) <= 0) newErrors[`option_${idx}_quantity`] = "Valid quantity is required";
-    });
+    if (formData.options && formData.options.length > 0) {
+      formData.options.forEach((option, idx) => {
+        if (!option.color) newErrors[`option_${idx}_color`] = "Color is required";
+        if (!option.quantity || Number(option.quantity) <= 0) newErrors[`option_${idx}_quantity`] = "Valid quantity is required";
+        if (!option.imageUrls.some(img => img.trim())) {
+          newErrors[`option_${idx}_imageUrls`] = "At least one variant image is required";
+        }
+      });
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -339,24 +339,29 @@ export const AddProduct: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
-    
-    const payload = {
+
+    const payload: ProductFormData = {
       ...formData,
       price: Number(formData.price),
       quantity: Number(formData.quantity),
       images: formData.images.filter(Boolean),
-      options: formData.options.map(opt => ({
-        ...opt,
-        quantity: Number(opt.quantity),
-        price: opt.price ? Number(opt.price) : undefined,
-        imageUrls: opt.imageUrls.filter(Boolean),
-      })),
     };
-    
+
+    if (formData.options && formData.options.length > 0) {
+      payload.options = formData.options.map(opt => ({
+        ...opt,
+        quantity: opt.quantity,
+        price: opt.price,
+        imageUrls: opt.imageUrls.filter(Boolean),
+      }));
+    } else {
+      delete payload.options;
+    }
+
     mutation.mutate(payload);
   };
 
@@ -682,7 +687,7 @@ export const AddProduct: React.FC = () => {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Product Variants</h2>
+              <h2 className="text-xl font-semibold text-gray-800">Product Variants (Optional)</h2>
               <button
                 type="button"
                 onClick={addOption}
@@ -693,12 +698,12 @@ export const AddProduct: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-6">
-              {formData.options.map((option, idx) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-800">Variant {idx + 1}</h3>
-                    {formData.options.length > 1 && (
+            {formData.options && formData.options.length > 0 && (
+              <div className="space-y-6">
+                {formData.options.map((option, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium text-gray-800">Variant {idx + 1}</h3>
                       <button
                         type="button"
                         onClick={() => removeOption(idx)}
@@ -707,96 +712,102 @@ export const AddProduct: React.FC = () => {
                         <X size={14} />
                         Remove
                       </button>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Color *</label>
-                      <ColorSelector
-                        value={option.color}
-                        onChange={value => handleOptionChange(idx, "color", value)}
-                        error={errors[`option_${idx}_color`]}
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Color *</label>
+                        <ColorSelector
+                          value={option.color}
+                          onChange={value => handleOptionChange(idx, "color", value)}
+                          error={errors[`option_${idx}_color`]}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
+                        <Input 
+                          type="number"
+                          value={option.quantity}
+                          onChange={e => handleOptionChange(idx, "quantity", e.target.value)}
+                          className={errors[`option_${idx}_quantity`] ? 'border-red-500' : ''}
+                          placeholder="0"
+                        />
+                        {errors[`option_${idx}_quantity`] && <p className="text-red-500 text-sm mt-1 flex items-center gap-1"><AlertCircle size={16} />{errors[`option_${idx}_quantity`]}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Price (Optional)</label>
+                        <Input 
+                          type="number"
+                          value={option.price}
+                          onChange={e => handleOptionChange(idx, "price", e.target.value)}
+                          placeholder="Leave empty to use base price"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
-                      <Input 
-                        type="number"
-                        value={option.quantity}
-                        onChange={e => handleOptionChange(idx, "quantity", e.target.value)}
-                        className={errors[`option_${idx}_quantity`] ? 'border-red-500' : ''}
-                        placeholder="0"
-                      />
-                      {errors[`option_${idx}_quantity`] && <p className="text-red-500 text-sm mt-1 flex items-center gap-1"><AlertCircle size={16} />{errors[`option_${idx}_quantity`]}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Price (Optional)</label>
-                      <Input 
-                        type="number"
-                        value={option.price}
-                        onChange={e => handleOptionChange(idx, "price", e.target.value)}
-                        placeholder="Leave empty to use base price"
-                      />
-                    </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Variant Images</label>
-                    <div className="space-y-2">
-                      {option.imageUrls.map((img, imgIdx) => (
-                        <div key={imgIdx} className="flex flex-col gap-2">
-                          <div className="flex gap-2">
-                            <Input 
-                              value={img}
-                              onChange={e => handleOptionImageChange(idx, imgIdx, e.target.value)}
-                              placeholder="https://example.com/variant-image.jpg"
-                              className="flex-1"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => addOptionImage(idx)}
-                              className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                            >
-                              <Plus size={16} />
-                            </button>
-                            {option.imageUrls.length > 1 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Variant Images</label>
+                      <div className="space-y-2">
+                        {option.imageUrls.map((img, imgIdx) => (
+                          <div key={imgIdx} className="flex flex-col gap-2">
+                            <div className="flex gap-2">
+                              <Input 
+                                value={img}
+                                onChange={e => handleOptionImageChange(idx, imgIdx, e.target.value)}
+                                placeholder="https://example.com/variant-image.jpg"
+                                className="flex-1"
+                              />
                               <button
                                 type="button"
-                                onClick={() => removeOptionImage(idx, imgIdx)}
-                                className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                                onClick={() => addOptionImage(idx)}
+                                className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                               >
-                                <Trash2 size={16} />
+                                <Plus size={16} />
                               </button>
-                            )}
-                          </div>
-                          {img && (
-                            <div className="ml-2">
-                              {imageErrors[`option_${idx}_${imgIdx}`] ? (
-                                <p className="text-red-500 text-sm flex items-center gap-1">
-                                  <AlertCircle size={16} />
-                                  Failed to load image
-                                </p>
-                              ) : (
-                                <div className="w-full max-w-[250px] aspect-square bg-gray-100 rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden">
-                                  <img
-                                    src={img}
-                                    alt={`Variant ${idx + 1} image ${imgIdx + 1} preview`}
-                                    className="w-full h-full object-cover"
-                                    style={{ aspectRatio: '1/1' }}
-                                    onError={() => handleImageError(`option_${idx}_${imgIdx}`)}
-                                  />
-                                </div>
+                              {option.imageUrls.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeOptionImage(idx, imgIdx)}
+                                  className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
                               )}
                             </div>
-                          )}
-                        </div>
-                      ))}
+                            {img && (
+                              <div className="ml-2">
+                                {imageErrors[`option_${idx}_${imgIdx}`] ? (
+                                  <p className="text-red-500 text-sm flex items-center gap-1">
+                                    <AlertCircle size={16} />
+                                    Failed to load image
+                                  </p>
+                                ) : (
+                                  <div className="w-full max-w-[250px] aspect-square bg-gray-100 rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden">
+                                    <img
+                                      src={img}
+                                      alt={`Variant ${idx + 1} image ${imgIdx + 1} preview`}
+                                      className="w-full h-full object-cover"
+                                      style={{ aspectRatio: '1/1' }}
+                                      onError={() => handleImageError(`option_${idx}_${imgIdx}`)}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {errors[`option_${idx}_imageUrls`] && (
+                          <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                            <AlertCircle size={16} />
+                            {errors[`option_${idx}_imageUrls`]}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
