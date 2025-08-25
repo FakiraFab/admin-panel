@@ -1,13 +1,24 @@
 import { useState } from 'react';
 import { X, Save, User, Mail, Phone, MapPin, Package, MessageSquare } from 'lucide-react';
 import type { Enquiry } from '../../types';
+import { updateInquiry } from '../../lib/api';
 
-interface EditInquiryProps {
+
+
+
+interface EditInquiryProps {  
   inquiry: Enquiry;
+  
   onSave: () => void;
   onCancel: () => void;
 }
+
+
+
+
 const EditInquiry: React.FC<EditInquiryProps> = ({ inquiry, onSave, onCancel }) => {
+  console.log('Received inquiry prop:', inquiry);
+  
   const [formData, setFormData] = useState({
     userName: inquiry.userName || '',
     userEmail: inquiry.userEmail || '',
@@ -20,6 +31,8 @@ const EditInquiry: React.FC<EditInquiryProps> = ({ inquiry, onSave, onCancel }) 
     status: inquiry.status || 'Pending',
     companyName: inquiry.companyName || '',
   });
+
+  console.log('Initial formData:', formData);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,11 +50,9 @@ const EditInquiry: React.FC<EditInquiryProps> = ({ inquiry, onSave, onCancel }) 
     
     try {
       // Here you would typically make an API call to update the inquiry
-      // await updateInquiry(inquiry._id, formData);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
+      await updateInquiry(inquiry._id, formData);
       onSave();
     } catch (error) {
       console.error('Failed to update inquiry:', error);
