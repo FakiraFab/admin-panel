@@ -7,6 +7,7 @@ import { fetchProducts, deleteProduct } from "../../lib/api";
 import { EditProduct } from "./EditProduct";
 import { useToast } from "../../components/ui/toast";
 import { Pagination } from "../../components/ui/Pagination";
+import { Filter, productSortOptions } from "../../components/ui/filter";
 
 export const ProductList: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
@@ -17,6 +18,7 @@ export const ProductList: React.FC = () => {
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [sortOrder, setSortOrder] = useState('-createdAt');
 
   interface ProductApiResponse {
     data: any[];
@@ -25,8 +27,12 @@ export const ProductList: React.FC = () => {
   }
 
   const { data: productData, isLoading, error } = useQuery<ProductApiResponse>({
-    queryKey: ["products", currentPage, itemsPerPage],
-    queryFn: () => fetchProducts({ page: currentPage, limit: itemsPerPage })
+    queryKey: ["products", currentPage, itemsPerPage, sortOrder],
+    queryFn: () => fetchProducts({ 
+      page: currentPage, 
+      limit: itemsPerPage,
+      sort: sortOrder
+    })
   });
 
   const handlePageChange = (page: number) => {
@@ -89,6 +95,13 @@ export const ProductList: React.FC = () => {
           <PlusIcon className="w-4 h-4" />
           Add Product
         </Link>
+      </div>
+      <div className="flex justify-end">
+        <Filter
+          selectedSort={sortOrder}
+          onSortChange={setSortOrder}
+          sortOptions={productSortOptions}
+        />
       </div>
       
       <Card>

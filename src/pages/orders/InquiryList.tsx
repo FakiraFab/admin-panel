@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Pagination } from "../../components/ui/Pagination";
+import { Filter, defaultSortOptions, inquirySortOptions } from "../../components/ui/filter";
 import { EditIcon, TrashIcon, ChevronDown, ChevronUp, Package, MessageSquare } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -6,15 +8,20 @@ import { fetchInquiries, deleteInquiry } from '../../lib/api';
 import { useToast } from '../../components/ui/toast';
 import type { Enquiry } from '../../types';
 import EditInquiry from './EditInquiry';
-import { Pagination } from '../../components/ui/Pagination';
 
 const InquiryList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [sortOrder, setSortOrder] = useState('latest');
 
   const { data: response, isLoading, error } = useQuery({
-    queryKey: ['inquiries', currentPage, itemsPerPage],
-    queryFn: () => fetchInquiries({ page: currentPage, limit: itemsPerPage }),
+    queryKey: ['inquiries', currentPage, itemsPerPage, sortOrder, status],
+    queryFn: () => fetchInquiries({ 
+      page: currentPage, 
+      limit: itemsPerPage,
+      sort: sortOrder, 
+      status
+    }),
   });
 
   const queryClient = useQueryClient();
@@ -72,10 +79,19 @@ const InquiryList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Inquiries</h1>
-        <div className="text-sm text-gray-500">
-          {inquiries.length} {inquiries.length === 1 ? 'inquiry' : 'inquiries'} found
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-800">Inquiries</h1>
+          <div className="text-sm text-gray-500">
+            {inquiries.length} {inquiries.length === 1 ? 'inquiry' : 'inquiries'} found
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Filter
+            selectedSort={sortOrder}
+            onSortChange={setSortOrder}
+            sortOptions={inquirySortOptions}
+          />
         </div>
       </div>
 

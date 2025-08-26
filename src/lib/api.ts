@@ -5,17 +5,33 @@ import { API_URL } from "../constant";
 interface PaginationParams {
   page?: number;
   limit?: number;
+  sort?: string; // MongoDB sort string (e.g., 'name', '-name', 'price', '-price', 'createdAt', '-createdAt')
+  category?: string; // Category ID or name
+  subcategory?: string; // Subcategory ID or name
 }
 
 
-export const fetchProducts = async ({ page = 1, limit = 10 }: PaginationParams = {}) => {
+export const fetchProducts = async ({ 
+  page = 1, 
+  limit = 10, 
+  sort = "-createdAt",
+  category,
+  subcategory
+}: PaginationParams = {}) => {
   const { data } = await axios.get(`${API_URL}/products`, {
-    params: { page, limit }
+    params: { 
+      page, 
+      limit, 
+      sort,
+      ...(category && { category }),
+      ...(subcategory && { subcategory })
+    }
   });
   return {
     data: data.data,
     total: data.total,
-    totalPages: Math.ceil(data.total / limit)
+    totalPages: Math.ceil(data.total / limit),
+    filters: data.filters // Include subcategories for filtering
   };
 };
 
@@ -106,30 +122,35 @@ export const deleteBanner = async (id: string) => {
 };
 
 // Fixed inquiry API functions to use consistent base URL
-export const fetchInquiries = async (
-  { page = 1, limit = 10 }: PaginationParams = {}
-): Promise<{ data: any[]; total: number; totalPages: number }> => {
+interface InquiryParams extends PaginationParams {
+  status?: string;
+  product?: string;
+}
+
+export const fetchInquiries = async ({
+  page = 1,
+  limit = 10,
+  sort = "-createdAt",
+  status,
+  product
+}: InquiryParams = {}): Promise<{ data: any[]; total: number; totalPages: number }> => {
   const response = await axios.get(`${API_URL}/inquiry`, {
-    params: { page, limit }
+    params: {
+      page,
+      limit,
+      sort,
+      ...(status && { status }),
+      ...(product && { product })
+    }
   });
+  
   const resData = response.data || {};
   const pagination = resData.pagination || {};
-  const total: number =
-    typeof pagination.total === 'number'
-      ? pagination.total
-      : typeof resData.total === 'number'
-        ? resData.total
-        : typeof resData.totalItems === 'number'
-          ? resData.totalItems
-          : 0;
-  const totalPages: number =
-    typeof pagination.pages === 'number' && pagination.pages > 0
-      ? pagination.pages
-      : Math.ceil((total || 0) / limit);
+  
   return {
     data: resData.data || [],
-    total,
-    totalPages
+    total: pagination.total || 0,
+    totalPages: pagination.pages || Math.ceil((pagination.total || 0) / limit)
   };
 };
 
