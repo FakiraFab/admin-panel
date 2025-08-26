@@ -85,54 +85,55 @@ export const ProductList: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#1c1c1c]">Products</h1>
-        <Link
-          to="/products/add"
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <PlusIcon className="w-4 h-4" />
-          Add Product
-        </Link>
-      </div>
-      <div className="flex justify-end">
-        <Filter
-          selectedSort={sortOrder}
-          onSortChange={setSortOrder}
-          sortOptions={productSortOptions}
-        />
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1c1c1c]">Products</h1>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <Filter
+            selectedSort={sortOrder}
+            onSortChange={setSortOrder}
+            sortOptions={productSortOptions}
+            className="w-full sm:w-auto"
+          />
+          <Link
+            to="/products/add"
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Add Product
+          </Link>
+        </div>
       </div>
       
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             {isLoading ? (
-              <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">Loading products...</p>
+              <div className="p-4 sm:p-8 text-center">
+                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600 mx-auto mb-3 sm:mb-4"></div>
+                <p className="text-gray-500 text-sm sm:text-base">Loading products...</p>
               </div>
             ) : error ? (
-              <div className="p-8 text-center">
-                <div className="text-red-500 mb-2">⚠️ Error loading products</div>
-                <p className="text-gray-500">Please try refreshing the page</p>
+              <div className="p-4 sm:p-8 text-center">
+                <div className="text-red-500 mb-2 text-sm sm:text-base">⚠️ Error loading products</div>
+                <p className="text-gray-500 text-xs sm:text-sm">Please try refreshing the page</p>
               </div>
             ) : productData?.data?.length === 0 ? (
-              <div className="p-8 text-center">
-                <p className="text-gray-500">No products found</p>
+              <div className="p-4 sm:p-8 text-center">
+                <p className="text-gray-500 text-sm sm:text-base">No products found</p>
               </div>
             ) : (
-              <table className="w-full">
+              <table className="w-full min-w-[800px]">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="text-left p-4 font-semibold text-[#1c1c1c]">Image</th>
-                    <th className="text-left p-4 font-semibold text-[#1c1c1c]">Product Details</th>
-                    <th className="text-left p-4 font-semibold text-[#1c1c1c]">Category</th>
-                    <th className="text-left p-4 font-semibold text-[#1c1c1c]">Pricing</th>
-                    <th className="text-left p-4 font-semibold text-[#1c1c1c]">Stock</th>
-                    <th className="text-left p-4 font-semibold text-[#1c1c1c]">Variants</th>
-                    <th className="text-left p-4 font-semibold text-[#1c1c1c]">Dates</th>
-                    <th className="text-left p-4 font-semibold text-[#1c1c1c]">Actions</th>
+                    <th className="text-left p-3 sm:p-4 font-semibold text-[#1c1c1c] text-xs sm:text-sm">Image</th>
+                    <th className="text-left p-3 sm:p-4 font-semibold text-[#1c1c1c] text-xs sm:text-sm">Product Details</th>
+                    <th className="text-left p-3 sm:p-4 font-semibold text-[#1c1c1c] text-xs sm:text-sm hidden md:table-cell">Category</th>
+                    <th className="text-left p-3 sm:p-4 font-semibold text-[#1c1c1c] text-xs sm:text-sm">Pricing</th>
+                    <th className="text-left p-3 sm:p-4 font-semibold text-[#1c1c1c] text-xs sm:text-sm hidden sm:table-cell">Stock</th>
+                    <th className="text-left p-3 sm:p-4 font-semibold text-[#1c1c1c] text-xs sm:text-sm hidden lg:table-cell">Variants</th>
+                    <th className="text-left p-3 sm:p-4 font-semibold text-[#1c1c1c] text-xs sm:text-sm hidden md:table-cell">Dates</th>
+                    <th className="text-left p-3 sm:p-4 font-semibold text-[#1c1c1c] text-xs sm:text-sm">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -140,62 +141,71 @@ export const ProductList: React.FC = () => {
                     <React.Fragment key={product._id}>
                       <tr className="border-b hover:bg-gray-50">
                         {/* Image */}
-                        <td className="p-4">
+                        <td className="p-3 sm:p-4">
                           {product.imageUrl ? (
                             <img
                               src={product.imageUrl}
                               alt={product.name}
-                              className="w-16 h-16 object-contain rounded-lg shadow-sm transition-transform duration-300 transform hover:scale-110"
+                              className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded-lg shadow-sm transition-transform duration-300 transform hover:scale-110"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
                               }}
                             />
                           ) : (
-                            <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                              <span className="text-gray-500 text-xs">No Image</span>
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                              <span className="text-gray-500 text-[10px] sm:text-xs">No Image</span>
                             </div>
                           )}
                         </td>
 
                         {/* Product Details */}
-                        <td className="p-4">
+                        <td className="p-3 sm:p-4">
                           <div className="space-y-1">
-                            <p className="font-semibold text-[#1c1c1c] text-sm">
+                            <p className="font-semibold text-[#1c1c1c] text-xs sm:text-sm">
                               {product.name1 || product.name}
                             </p>
-                            <p className="text-xs text-[#979797] line-clamp-2">
+                            <p className="text-[11px] sm:text-xs text-[#979797] line-clamp-2">
                               {product.description || 'No description available'}
                             </p>
-                            {product.sizes && (
-                              <p className="text-xs text-blue-600">
-                                Sizes: {Array.isArray(product.sizes) ? product.sizes.join(", ") : product.sizes}
+                            <div className="flex flex-wrap gap-2">
+                              {product.sizes && (
+                                <p className="text-[11px] sm:text-xs text-blue-600">
+                                  Sizes: {Array.isArray(product.sizes) ? product.sizes.join(", ") : product.sizes}
+                                </p>
+                              )}
+                              {product.length && (
+                                <p className="text-[11px] sm:text-xs text-green-600">
+                                  Length: {product.length}
+                                </p>
+                              )}
+                            </div>
+                            {/* Show category info on mobile */}
+                            <div className="md:hidden space-y-1 mt-2 pt-2 border-t border-gray-100">
+                              <p className="text-[11px] sm:text-xs text-[#979797]">
+                                {product.category?.name || product.category || 'N/A'} / 
+                                {product.subcategory?.name || product.subcategory || 'No subcategory'}
                               </p>
-                            )}
-                            {product.length && (
-                              <p className="text-xs text-green-600">
-                                Length: {product.length}
-                              </p>
-                            )}
+                            </div>
                           </div>
                         </td>
 
                         {/* Category */}
-                        <td className="p-4">
+                        <td className="p-3 sm:p-4 hidden md:table-cell">
                           <div className="space-y-1">
-                            <p className="font-medium text-[#1c1c1c] text-sm">
+                            <p className="font-medium text-[#1c1c1c] text-xs sm:text-sm">
                               {product.category?.name || product.category || 'N/A'}
                             </p>
-                            <p className="text-xs text-[#979797]">
+                            <p className="text-[11px] sm:text-xs text-[#979797]">
                               {product.subcategory?.name || product.subcategory || 'No subcategory'}
                             </p>
                           </div>
                         </td>
 
                         {/* Pricing */}
-                        <td className="p-4">
+                        <td className="p-3 sm:p-4">
                           <div className="space-y-1">
-                            <p className="font-semibold text-[#1c1c1c] text-sm">
+                            <p className="font-semibold text-[#1c1c1c] text-xs sm:text-sm">
                               ₹{product.price?.toFixed(2) || 'N/A'}
                             </p>
                             {product.options && product.options.length > 0 && (
@@ -208,12 +218,12 @@ export const ProductList: React.FC = () => {
                         </td>
 
                         {/* Stock */}
-                        <td className="p-4">
+                        <td className="p-3 sm:p-4 hidden sm:table-cell">
                           <div className="space-y-1">
-                            <p className="font-medium text-[#1c1c1c] text-sm">
+                            <p className="font-medium text-[#1c1c1c] text-xs sm:text-sm">
                               {product.quantity || 0} {product.unit || 'meter'}
                             </p>
-                            <div className={`inline-block px-2 py-1 rounded-full text-xs ${
+                            <div className={`inline-block px-2 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs ${
                               (product.quantity || 0) > 20 
                                 ? 'bg-green-100 text-green-800' 
                                 : (product.quantity || 0) > 5 
@@ -227,15 +237,15 @@ export const ProductList: React.FC = () => {
                         </td>
 
                         {/* Variants */}
-                        <td className="p-4">
+                        <td className="p-3 sm:p-4 hidden lg:table-cell">
                           <div className="space-y-1">
-                            <p className="text-sm font-medium text-[#1c1c1c]">
+                            <p className="text-xs sm:text-sm font-medium text-[#1c1c1c]">
                               {product.options?.length || 0} variants
                             </p>
                             {product.options && product.options.length > 0 && (
                               <button
                                 onClick={() => toggleExpanded(product._id)}
-                                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                                className="flex items-center gap-1 text-[11px] sm:text-xs text-blue-600 hover:text-blue-800"
                               >
                                 {expandedProducts.has(product._id) ? (
                                   <>
@@ -254,33 +264,33 @@ export const ProductList: React.FC = () => {
                         </td>
 
                         {/* Dates */}
-                        <td className="p-4">
+                        <td className="p-3 sm:p-4 hidden md:table-cell">
                           <div className="space-y-1">
-                            <p className="text-xs text-[#979797]">
+                            <p className="text-[11px] sm:text-xs text-[#979797]">
                               Created: {product.createdAt ? formatDate(product.createdAt) : 'N/A'}
                             </p>
-                            <p className="text-xs text-[#979797]">
+                            <p className="text-[11px] sm:text-xs text-[#979797]">
                               Updated: {product.updatedAt ? formatDate(product.updatedAt) : 'N/A'}
                             </p>
                           </div>
                         </td>
 
                         {/* Actions */}
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
+                        <td className="p-3 sm:p-4">
+                          <div className="flex items-center gap-1 sm:gap-2">
                             <button 
                               onClick={() => handleEditClick(product)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              className="p-1.5 sm:p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                               title="Edit Product"
                             >
-                              <EditIcon className="w-4 h-4" />
+                              <EditIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </button>
                             <button 
                               onClick={() => handleDeleteClick(product._id, product.name1 || product.name)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                              className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
                               title="Delete Product"
                             >
-                              <TrashIcon className="w-4 h-4" />
+                              <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </button>
                           </div>
                         </td>
@@ -289,22 +299,22 @@ export const ProductList: React.FC = () => {
                       {/* Expanded Variants Row */}
                       {expandedProducts.has(product._id) && product.options && product.options.length > 0 && (
                         <tr className="bg-blue-50">
-                          <td colSpan={8} className="p-4">
+                          <td colSpan={8} className="p-3 sm:p-4">
                             <div className="space-y-3">
-                              <h4 className="font-semibold text-[#1c1c1c] text-sm">Product Variants:</h4>
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              <h4 className="font-semibold text-[#1c1c1c] text-xs sm:text-sm">Product Variants:</h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                                 {product.options.map((option: any, index: number) => (
-                                  <div key={option._id || index} className="bg-white p-3 rounded-lg border">
+                                  <div key={option._id || index} className="bg-white p-2 sm:p-3 rounded-lg border">
                                     <div className="space-y-2">
                                       <div className="flex items-center justify-between">
-                                        <span className="font-medium text-sm text-[#1c1c1c]">
+                                        <span className="font-medium text-xs sm:text-sm text-[#1c1c1c]">
                                           {option.color || `Variant ${index + 1}`}
                                         </span>
-                                        <span className="text-sm font-semibold text-green-600">
+                                        <span className="text-xs sm:text-sm font-semibold text-green-600">
                                           ₹{option.price?.toFixed(2) || 'N/A'}
                                         </span>
                                       </div>
-                                      <div className="flex items-center justify-between text-xs text-[#979797]">
+                                      <div className="flex items-center justify-between text-[11px] sm:text-xs text-[#979797]">
                                         <span>Stock: {option.quantity || 0}</span>
                                         <span>Images: {option.imageUrls?.length || 0}</span>
                                       </div>
@@ -315,7 +325,7 @@ export const ProductList: React.FC = () => {
                                               key={imgIndex}
                                               src={url}
                                               alt={`${option.color} variant ${imgIndex + 1}`}
-                                              className="w-8 h-8 object-cover rounded border"
+                                              className="w-6 h-6 sm:w-8 sm:h-8 object-cover rounded border"
                                               onError={(e) => {
                                                 const target = e.target as HTMLImageElement;
                                                 target.style.display = 'none';
@@ -323,8 +333,8 @@ export const ProductList: React.FC = () => {
                                             />
                                           ))}
                                           {option.imageUrls.length > 3 && (
-                                            <div className="w-8 h-8 bg-gray-100 rounded border flex items-center justify-center">
-                                              <span className="text-xs text-gray-500">+{option.imageUrls.length - 3}</span>
+                                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 rounded border flex items-center justify-center">
+                                              <span className="text-[10px] sm:text-xs text-gray-500">+{option.imageUrls.length - 3}</span>
                                             </div>
                                           )}
                                         </div>
