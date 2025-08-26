@@ -8,6 +8,7 @@ import EditCategory from "./EditCategory";
 import { deleteCategory } from "./DeleteCategory";
 import { useToast } from "../../components/ui/toast";
 import { Pagination } from "../../components/ui/Pagination";
+import { Filter, defaultSortOptions } from "../../components/ui/filter";
 
 export const CategoryList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -15,6 +16,7 @@ export const CategoryList: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [sortOrder, setSortOrder] = useState('-createdAt');
 
   interface CategoryApiResponse {
     data: any[];
@@ -23,8 +25,12 @@ export const CategoryList: React.FC = () => {
   }
 
   const { data: categoryData, isLoading, error } = useQuery<CategoryApiResponse>({
-    queryKey: ["categories", currentPage, itemsPerPage],
-    queryFn: () => fetchCategories({ page: currentPage, limit: itemsPerPage })
+    queryKey: ["categories", currentPage, itemsPerPage, sortOrder],
+    queryFn: () => fetchCategories({ 
+      page: currentPage, 
+      limit: itemsPerPage,
+      sort: sortOrder
+    })
   });
 
   const handleEdit = (category: any) => setEditingCategory(category);
@@ -67,6 +73,13 @@ export const CategoryList: React.FC = () => {
           <PlusIcon className="w-4 h-4" />
           Add Category
         </Link>
+      </div>
+      <div className="flex justify-end">
+        <Filter
+          selectedSort={sortOrder}
+          onSortChange={setSortOrder}
+          sortOptions={defaultSortOptions}
+        />
       </div>
       
       <Card>
