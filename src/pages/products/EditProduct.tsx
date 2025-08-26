@@ -79,7 +79,26 @@ interface EditProductProps {
 
 export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClose }) => {
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    category: string;
+    subcategory: string;
+    description: string;
+    fullDescription: string;
+    price: string;
+    imageUrl: string;
+    images: string[];
+    quantity: string;
+    unit: string;
+    specifications: {
+      material: string;
+      style: string;
+      length: string;
+      blousePiece: string;
+      designNo: string;
+    };
+    options: ProductOption[];
+  }>({
     name: "",
     category: "",
     subcategory: "",
@@ -97,15 +116,7 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
       blousePiece: "Yes",
       designNo: "",
     },
-    options: [
-      {
-        color: "",
-      colorCode: "",
-        quantity: "",
-        imageUrls: [""],
-        price: "",
-      },
-    ],
+    options: [],
   });
 
   
@@ -187,13 +198,13 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
               imageUrls: opt.imageUrls?.length > 0 ? opt.imageUrls : [""],
               price: opt.price?.toString() || "",
             }))
-          : [{ color: "", colorCode: "", quantity: "", imageUrls: [""], price: "" }],
+          : [],
       });
     }
     
   }, [product]);
 
-//   console.log(formData.options[0].imageUrls[0])
+
   
   
   const handleInputChange = (field: string, value: any) => {
@@ -340,10 +351,15 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
       newErrors.unit = "Unit must be either piece or meter";
     }
 
-    formData.options.forEach((option, idx) => {
-      if (!option.color) newErrors[`option_${idx}_color`] = "Color is required";
-      if (!option.quantity || Number(option.quantity) <= 0) newErrors[`option_${idx}_quantity`] = "Valid quantity is required";
-    });
+    if (formData.options && formData.options.length > 0) {
+      formData.options.forEach((option, idx) => {
+        if (!option.color) newErrors[`option_${idx}_color`] = "Color is required";
+        if (!option.quantity || Number(option.quantity) <= 0) newErrors[`option_${idx}_quantity`] = "Valid quantity is required";
+        if (!option.imageUrls.some(img => img.trim())) {
+          newErrors[`option_${idx}_imageUrls`] = "At least one variant image is required";
+        }
+      });
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -360,14 +376,19 @@ export const EditProduct: React.FC<EditProductProps> = ({ product, isOpen, onClo
       ...formData,
       price: Number(formData.price),
       quantity: Number(formData.quantity),
-      images: formData.images.filter(Boolean),
-      options: formData.options.map(opt => ({
+      images: formData.images.filter(Boolean)
+    };
+
+    if (formData.options && formData.options.length > 0) {
+      payload.options = formData.options.map(opt => ({
         ...opt,
         quantity: Number(opt.quantity),
         price: opt.price ? Number(opt.price) : undefined,
-        imageUrls: opt.imageUrls.filter(Boolean),
-      })),
-    };
+        imageUrls: opt.imageUrls.filter(Boolean)
+      }));
+    } else {
+      delete payload.options;
+    }
 
     mutation.mutate(payload);
   };
