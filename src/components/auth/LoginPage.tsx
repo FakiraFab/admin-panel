@@ -25,8 +25,10 @@ export const LoginPage: React.FC = () => {
       if (!success) {
         setError("Invalid password. Please try again.");
       }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
+    } catch (err: any) {
+      // Handle specific error messages from the backend
+      const errorMessage = err.response?.data?.message || "An error occurred. Please try again.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

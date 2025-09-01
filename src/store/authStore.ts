@@ -1,8 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import axios from 'axios';
 import { AuthState, User } from '../types';
+import { API_URL } from '../constant';
 
-const ADMIN_PASSWORD = 'admin123'; // In production, this should be environment variable
+// Set up axios interceptor for auth token
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -10,23 +19,27 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       user: null,
       login: async (password: string) => {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        if (password === ADMIN_PASSWORD) {
-          const user: User = {
-            id: '1',
-            name: 'Andre tate',
-            role: 'Admin',
-            avatar: '/shape.png'
-          };
+        try {
+          const response = await axios.post(`${API_URL}/admin/login`, { password });
           
-          set({ isAuthenticated: true, user });
-          return true;
+          if (response.data.success) {
+            const { token, user } = response.data.data;
+            
+            // Store token in localStorage
+            localStorage.setItem('token', token);
+            
+            set({ isAuthenticated: true, user });
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('Login error:', error);
+          return false;
         }
-        return false;
       },
       logout: () => {
+        // Clear token from localStorage
+        localStorage.removeItem('token');
         set({ isAuthenticated: false, user: null });
       }
     }),
