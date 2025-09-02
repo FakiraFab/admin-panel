@@ -537,7 +537,7 @@ export const AddProduct: React.FC = () => {
             
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                Primary Image URL *
+                 Product Image URL(for internal admin use) *
                 <button
                   type="button"
                   className="text-xs text-blue-600 underline hover:text-blue-800"
@@ -577,7 +577,7 @@ export const AddProduct: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Additional Images</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product Images (Click + button to add more)</label>
               <div className="space-y-2">
                 {formData.images.map((img, idx) => (
                   <div key={idx} className="flex flex-col gap-2">
