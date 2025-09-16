@@ -125,7 +125,7 @@ export const SubcategoryList: React.FC = () => {
                     <tr key={sub._id} className="border-b hover:bg-gray-50">
                       <td className="p-4 font-medium text-[#1c1c1c]">{sub.name}</td>
                       <td className="p-4 text-[#979797]">{sub.description}</td>
-                      <td className="p-4 text-[#979797]">{getCategoryName(sub.parentCategory._id)}</td>
+                      <td className="p-4 text-[#979797]">{getCategoryName(sub.parentCategory?._id || '')}</td>
                       <td className="p-4 text-[#979797]">{sub.createdAt ? new Date(sub.createdAt).toLocaleDateString() : ""}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
