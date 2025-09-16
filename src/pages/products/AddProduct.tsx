@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { X, Plus, Trash2, AlertCircle } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { X, Plus, AlertCircle } from "lucide-react";
 import ImageGuidelinesModal from '../../components/ui/ImageGuidelinesModal';
+import CloudinaryUploader, { CloudinaryUploaderRef } from "../../components/ui/CloudinaryUploader";
 
 interface ProductSpecifications {
   material: string;
@@ -29,6 +30,8 @@ interface ProductFormData {
   images: string[];
   quantity: number | string;
   unit: string;
+  color: string;
+  colorCode?: string;
   specifications: ProductSpecifications;
   options?: ProductOption[];
 }
@@ -102,6 +105,7 @@ export const AddProduct: React.FC = () => {
     images: [""],
     quantity: "",
     unit: "meter",
+    color: "",
     specifications: {
       material: "Cotton",
       style: "Traditional",
@@ -117,6 +121,16 @@ export const AddProduct: React.FC = () => {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
+  // Refs for Cloudinary uploaders
+  const primaryImageUploaderRef = useRef<CloudinaryUploaderRef>(null);
+  const additionalImagesUploaderRef = useRef<CloudinaryUploaderRef>(null);
+  const variantImageUploaderRefs = useRef<CloudinaryUploaderRef[]>([]);
+
+  // State for selected files
+  const [primaryImageFiles, setPrimaryImageFiles] = useState<File[]>([]);
+  const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([]);
+  const [variantImageFiles, setVariantImageFiles] = useState<File[][]>([]);
+
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery<CategoryApiResponse>({
@@ -124,11 +138,15 @@ export const AddProduct: React.FC = () => {
     queryFn: () => fetchCategories({ limit: 1000 }),
   });
 
+  console.log('categoriesResponse',categoriesResponse);
+
   const { data: subcategoriesResponse, isLoading: subcategoriesLoading } = useQuery<SubcategoryApiResponse>({
     queryKey: ["subcategories", formData.category],
     queryFn: () => fetchSubcategories({ categoryId: formData.category, limit: 1000 }),
     enabled: !!formData.category,
   });
+
+  console.log('subcategoriesResponse',subcategoriesResponse);
 
   const mutation = useMutation({
     mutationFn: addProduct,
@@ -146,6 +164,7 @@ export const AddProduct: React.FC = () => {
         images: [""],
         quantity: "",
         unit: "meter",
+        color: "",
         specifications: {
           material: "Cotton",
           style: "Traditional",
@@ -206,30 +225,6 @@ export const AddProduct: React.FC = () => {
     }
   };
 
-  const handleOptionImageChange = (optionIdx: number, imgIdx: number, value: string) => {
-    setFormData(prev => {
-      const newOptions = [...prev.options!];
-      const newImageUrls = [...newOptions[optionIdx].imageUrls];
-      newImageUrls[imgIdx] = value;
-      newOptions[optionIdx].imageUrls = newImageUrls;
-      return { ...prev, options: newOptions };
-    });
-    if (imageErrors[`option_${optionIdx}_${imgIdx}`]) {
-      setImageErrors(prev => ({ ...prev, [`option_${optionIdx}_${imgIdx}`]: false }));
-    }
-  };
-
-  const handleImagesChange = (idx: number, value: string) => {
-    setFormData(prev => {
-      const newImages = [...prev.images];
-      newImages[idx] = value;
-      return { ...prev, images: newImages };
-    });
-    if (imageErrors[`image_${idx}`]) {
-      setImageErrors(prev => ({ ...prev, [`image_${idx}`]: false }));
-    }
-  };
-
   const addOption = () => {
     setFormData(prev => ({
       ...prev,
@@ -265,47 +260,6 @@ export const AddProduct: React.FC = () => {
     });
   };
 
-  const addImage = () => {
-    setFormData(prev => ({ ...prev, images: [...prev.images, ""] }));
-  };
-
-  const removeImage = (index: number) => {
-    if (formData.images.length > 1) {
-      setFormData(prev => ({
-        ...prev,
-        images: prev.images.filter((_, idx) => idx !== index),
-      }));
-      setImageErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[`image_${index}`];
-        return newErrors;
-      });
-    }
-  };
-
-  const addOptionImage = (optionIdx: number) => {
-    setFormData(prev => {
-      const newOptions = [...prev.options!];
-      newOptions[optionIdx].imageUrls = [...newOptions[optionIdx].imageUrls, ""];
-      return { ...prev, options: newOptions };
-    });
-  };
-
-  const removeOptionImage = (optionIdx: number, imgIdx: number) => {
-    setFormData(prev => {
-      const newOptions = [...prev.options!];
-      if (newOptions[optionIdx].imageUrls.length > 1) {
-        newOptions[optionIdx].imageUrls = newOptions[optionIdx].imageUrls.filter((_, idx) => idx !== imgIdx);
-      }
-      return { ...prev, options: newOptions };
-    });
-    setImageErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[`option_${optionIdx}_${imgIdx}`];
-      return newErrors;
-    });
-  };
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -316,10 +270,11 @@ export const AddProduct: React.FC = () => {
     if (!formData.price || Number(formData.price) <= 0) newErrors.price = "Valid price is required";
     if (!formData.quantity || Number(formData.quantity) <= 0) newErrors.quantity = "Valid quantity is required";
     if (!formData.unit) newErrors.unit = "Unit is required";
+    if (!formData.color) newErrors.color = "Primary color is required";
     if (formData.unit && !['piece', 'meter'].includes(formData.unit)) {
       newErrors.unit = "Unit must be either piece or meter";
     }
-    if (!formData.imageUrl.trim() && !formData.images.some(img => img.trim())) {
+    if (primaryImageFiles.length === 0 && additionalImageFiles.length === 0 && !formData.imageUrl.trim() && !formData.images.some(img => img.trim())) {
       newErrors.imageUrl = "At least one image (primary or additional) is required";
     }
 
@@ -327,7 +282,7 @@ export const AddProduct: React.FC = () => {
       formData.options.forEach((option, idx) => {
         if (!option.color) newErrors[`option_${idx}_color`] = "Color is required";
         if (!option.quantity || Number(option.quantity) <= 0) newErrors[`option_${idx}_quantity`] = "Valid quantity is required";
-        if (!option.imageUrls.some(img => img.trim())) {
+        if (!option.imageUrls.some(img => img.trim()) && (!variantImageFiles[idx] || variantImageFiles[idx].length === 0)) {
           newErrors[`option_${idx}_imageUrls`] = "At least one variant image is required";
         }
       });
@@ -337,37 +292,64 @@ export const AddProduct: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    const payload: ProductFormData = {
-      ...formData,
-      price: Number(formData.price),
-      quantity: Number(formData.quantity),
-      images: formData.images.filter(Boolean),
-    };
+    try {
+      // Upload all images first
+      const primaryImageUrls = primaryImageFiles.length > 0 
+        ? await primaryImageUploaderRef.current?.uploadFiles() || []
+        : [];
 
-    if (formData.options && formData.options.length > 0) {
-      payload.options = formData.options.map(opt => ({
-        ...opt,
-        quantity: opt.quantity,
-        price: opt.price,
-        imageUrls: opt.imageUrls.filter(Boolean),
-      }));
-    } else {
-      delete payload.options;
+      const additionalImageUrls = additionalImageFiles.length > 0
+        ? await additionalImagesUploaderRef.current?.uploadFiles() || []
+        : [];
+
+      // Upload variant images
+      const variantImageUrls: string[][] = [];
+      for (let i = 0; i < variantImageFiles.length; i++) {
+        if (variantImageFiles[i].length > 0 && variantImageUploaderRefs.current[i]) {
+          const urls = await variantImageUploaderRefs.current[i].uploadFiles() || [];
+          variantImageUrls[i] = urls;
+        } else {
+          variantImageUrls[i] = [];
+        }
+      }
+
+      // Update form data with uploaded URLs
+      const updatedFormData = {
+        ...formData,
+        imageUrl: primaryImageUrls[0] || formData.imageUrl,
+        images: additionalImageUrls.length > 0 ? additionalImageUrls : formData.images,
+        price: Number(formData.price),
+        quantity: Number(formData.quantity),
+      };
+
+      // Update options with uploaded variant URLs
+      if (formData.options && formData.options.length > 0) {
+        updatedFormData.options = formData.options.map((opt, idx) => ({
+          ...opt,
+          quantity: opt.quantity,
+          price: opt.price,
+          imageUrls: variantImageUrls[idx] || opt.imageUrls,
+        }));
+      } else {
+        delete updatedFormData.options;
+      }
+
+      mutation.mutate(updatedFormData);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      showToast(error.message || "Failed to upload images", 'error');
+      setIsSubmitting(false);
     }
-
-    mutation.mutate(payload);
   };
 
-  const handleImageError = (key: string) => {
-    setImageErrors(prev => ({ ...prev, [key]: true }));
-  };
+  
 
   const ColorSelector = ({ value, onChange, error }: { value: string; onChange: (value: string) => void; error?: string }) => (
     <div className="space-y-2">
@@ -505,6 +487,38 @@ export const AddProduct: React.FC = () => {
                 </Select>
                 {errors.unit && <p className="text-red-500 text-sm mt-1 flex items-center gap-1"><AlertCircle size={16} />{errors.unit}</p>}
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Color *</label>
+                <Select 
+                  value={formData.color}
+                  onValueChange={value => {
+                    const colorOption = COLOR_OPTIONS.find(c => c.name === value);
+                    handleInputChange("color", value);
+                    if (colorOption) {
+                      handleInputChange("colorCode", colorOption.code);
+                    }
+                  }}
+                >
+                  <SelectTrigger className={errors.color ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="Select color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COLOR_OPTIONS.map((color) => (
+                      <SelectItem key={color.name} value={color.name}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-4 h-4 rounded-full border border-gray-200" 
+                            style={{ backgroundColor: color.code }}
+                          />
+                          {color.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.color && <p className="text-red-500 text-sm mt-1 flex items-center gap-1"><AlertCircle size={16} />{errors.color}</p>}
+              </div>
             </div>
 
             <div className="mt-4">
@@ -546,88 +560,23 @@ export const AddProduct: React.FC = () => {
                   View Image Guidelines
                 </button>
               </label>
-              <Input 
-                value={formData.imageUrl} 
-                onChange={e => handleInputChange("imageUrl", e.target.value)}
-                className={errors.imageUrl ? 'border-red-500' : ''}
-                placeholder="https://example.com/image.jpg"
+              <CloudinaryUploader
+                ref={primaryImageUploaderRef}
+                multiple={false}
+                onFilesChange={setPrimaryImageFiles}
+                buttonLabel="Select Primary Image"
               />
               {errors.imageUrl && <p className="text-red-500 text-sm mt-1 flex items-center gap-1"><AlertCircle size={16} />{errors.imageUrl}</p>}
-              {formData.imageUrl && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600 mb-1">Image Preview (as shown in product card):</p>
-                  {imageErrors.primary ? (
-                    <p className="text-red-500 text-sm flex items-center gap-1">
-                      <AlertCircle size={16} />
-                      Failed to load image
-                    </p>
-                  ) : (
-                    <div className="w-full max-w-[250px] aspect-square bg-gray-100 rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={formData.imageUrl}
-                        alt="Primary image preview"
-                        className="w-full h-full object-cover"
-                        style={{ aspectRatio: '1/1' }}
-                        onError={() => handleImageError("primary")}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Product Images (Click + button to add more)</label>
-              <div className="space-y-2">
-                {formData.images.map((img, idx) => (
-                  <div key={idx} className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <Input 
-                        value={img} 
-                        onChange={e => handleImagesChange(idx, e.target.value)}
-                        placeholder="https://example.com/image.jpg"
-                        className="flex-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => addImage()}
-                        className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                      >
-                        <Plus size={16} />
-                      </button>
-                      {formData.images.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeImage(idx)}
-                          className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                    {img && (
-                      <div className="ml-2">
-                        {imageErrors[`image_${idx}`] ? (
-                          <p className="text-red-500 text-sm flex items-center gap-1">
-                            <AlertCircle size={16} />
-                            Failed to load image
-                          </p>
-                        ) : (
-                          <div className="w-full max-w-[250px] aspect-square bg-gray-100 rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden">
-                            <img
-                              src={img}
-                              alt={`Additional image ${idx + 1} preview`}
-                              className="w-full h-full object-cover"
-                              style={{ aspectRatio: '1/1' }}
-                              onError={() => handleImageError(`image_${idx}`)}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
+              <CloudinaryUploader
+                ref={additionalImagesUploaderRef}
+                multiple
+                onFilesChange={setAdditionalImageFiles}
+                buttonLabel="Select Additional Images"
+              />
             </div>
           </CardContent>
         </Card>
@@ -747,62 +696,26 @@ export const AddProduct: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Variant Images</label>
-                      <div className="space-y-2">
-                        {option.imageUrls.map((img, imgIdx) => (
-                          <div key={imgIdx} className="flex flex-col gap-2">
-                            <div className="flex gap-2">
-                              <Input 
-                                value={img}
-                                onChange={e => handleOptionImageChange(idx, imgIdx, e.target.value)}
-                                placeholder="https://example.com/variant-image.jpg"
-                                className="flex-1"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => addOptionImage(idx)}
-                                className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                              >
-                                <Plus size={16} />
-                              </button>
-                              {option.imageUrls.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeOptionImage(idx, imgIdx)}
-                                  className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              )}
-                            </div>
-                            {img && (
-                              <div className="ml-2">
-                                {imageErrors[`option_${idx}_${imgIdx}`] ? (
-                                  <p className="text-red-500 text-sm flex items-center gap-1">
-                                    <AlertCircle size={16} />
-                                    Failed to load image
-                                  </p>
-                                ) : (
-                                  <div className="w-full max-w-[250px] aspect-square bg-gray-100 rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden">
-                                    <img
-                                      src={img}
-                                      alt={`Variant ${idx + 1} image ${imgIdx + 1} preview`}
-                                      className="w-full h-full object-cover"
-                                      style={{ aspectRatio: '1/1' }}
-                                      onError={() => handleImageError(`option_${idx}_${imgIdx}`)}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        {errors[`option_${idx}_imageUrls`] && (
-                          <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
-                            <AlertCircle size={16} />
-                            {errors[`option_${idx}_imageUrls`]}
-                          </p>
-                        )}
-                      </div>
+                      <CloudinaryUploader
+                        ref={(el) => {
+                          if (el) {
+                            variantImageUploaderRefs.current[idx] = el;
+                          }
+                        }}
+                        multiple
+                        onFilesChange={(files) => {
+                          const newVariantFiles = [...variantImageFiles];
+                          newVariantFiles[idx] = files;
+                          setVariantImageFiles(newVariantFiles);
+                        }}
+                        buttonLabel="Select Variant Images"
+                      />
+                      {errors[`option_${idx}_imageUrls`] && (
+                        <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                          <AlertCircle size={16} />
+                          {errors[`option_${idx}_imageUrls`]}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}

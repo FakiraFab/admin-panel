@@ -41,6 +41,7 @@ export const ProductList: React.FC = () => {
   };
 
   const handleEditClick = (product: any) => {
+    console.log('product',product);
     setSelectedProduct(product);
     setIsModalOpen(true);
   };
@@ -174,11 +175,12 @@ export const ProductList: React.FC = () => {
                                   Sizes: {Array.isArray(product.sizes) ? product.sizes.join(", ") : product.sizes}
                                 </p>
                               )}
-                              {product.length && (
-                                <p className="text-[11px] sm:text-xs text-green-600">
-                                  Length: {product.length}
+                              {product.color && (
+                                <p className="text-[11px] sm:text-xs text-blue-600">
+                                  Color: {product.color}
                                 </p>
                               )}
+                              
                             </div>
                             {/* Show category info on mobile */}
                             <div className="md:hidden space-y-1 mt-2 pt-2 border-t border-gray-100">

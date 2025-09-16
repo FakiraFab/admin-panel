@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addCategory } from "../../lib/api";
 import ImageGuidelinesModal from '../../components/ui/ImageGuidelinesModal';
+import CloudinaryUploader, { CloudinaryUploaderRef } from "../../components/ui/CloudinaryUploader";
 
 
 export const AddCategory: React.FC = () => {
@@ -12,14 +13,21 @@ export const AddCategory: React.FC = () => {
     name: "",
     description: "",
     categoryImage: "",
+    categoryBannerImage: "",
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedBannerFiles, setSelectedBannerFiles] = useState<File[]>([]);
+  const uploaderRef = useRef<CloudinaryUploaderRef>(null);
+  const bannerUploaderRef = useRef<CloudinaryUploaderRef>(null);
 
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: addCategory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      setFormData({ name: "", description: "" ,categoryImage: ""});
+      setFormData({ name: "", description: "", categoryImage: "", categoryBannerImage: "" });
+      setSelectedFiles([]);
+      setSelectedBannerFiles([]);
     },
   });
 
@@ -27,9 +35,31 @@ export const AddCategory: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate(formData);
+    
+    try {
+      let imageUrl = "";
+      let bannerImageUrl = "";
+      
+      if (selectedFiles.length > 0 && uploaderRef.current) {
+        const urls = await uploaderRef.current.uploadFiles();
+        imageUrl = urls[0] || "";
+      }
+
+      if (selectedBannerFiles.length > 0 && bannerUploaderRef.current) {
+        const urls = await bannerUploaderRef.current.uploadFiles();
+        bannerImageUrl = urls[0] || "";
+      }
+      
+      mutation.mutate({
+        ...formData,
+        categoryImage: imageUrl,
+        categoryBannerImage: bannerImageUrl || null
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    }
   };
 
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
@@ -67,7 +97,7 @@ export const AddCategory: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold text-black tracking-[0.01px] flex items-center gap-2">
-                Category Image URL
+                Category Image
                 <button
                   type="button"
                   className="text-xs text-blue-600 underline hover:text-blue-800"
@@ -76,22 +106,25 @@ export const AddCategory: React.FC = () => {
                   View Image Guidelines
                 </button>
               </label>
-              <Input
-                className="h-12 pl-6 rounded-xl border border-[#dadada]"
-                placeholder="Enter Category Image URL"
-                value={formData.categoryImage}
-                onChange={(e) => handleInputChange("categoryImage", e.target.value)}
+              <CloudinaryUploader
+                ref={uploaderRef}
+                multiple={false}
+                onFilesChange={setSelectedFiles}
+                buttonLabel="Select Category Image"
               />
-              {formData.categoryImage && (
-                <div className="w-full max-w-[200px] aspect-square bg-gray-100 rounded-xl object-cover border border-gray-200 mt-2 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={formData.categoryImage}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    style={{ aspectRatio: '1/1' }}
-                  />
-                </div>
-              )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-black tracking-[0.01px] flex items-center gap-2">
+                Category Banner Image
+                <span className="text-xs text-gray-500">(Recommended: 1920x600)</span>
+              </label>
+              <CloudinaryUploader
+                ref={bannerUploaderRef}
+                multiple={false}
+                onFilesChange={setSelectedBannerFiles}
+                buttonLabel="Select Banner Image"
+              />
             </div>
 
             <button
