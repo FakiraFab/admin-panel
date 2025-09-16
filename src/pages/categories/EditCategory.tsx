@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { X } from "lucide-react";
 import { updateCategory } from "../../lib/api";
 import { useToast } from "../../components/ui/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import ImageGuidelinesModal from '../../components/ui/ImageGuidelinesModal';
+import CloudinaryUploader, { CloudinaryUploaderRef } from "../../components/ui/CloudinaryUploader";
 
 interface EditCategoryProps {
   category: {
@@ -11,6 +12,7 @@ interface EditCategoryProps {
     name: string;
     description?: string;
     categoryImage?: string;
+    categoryBannerImage?: string;
   };
   onSave: () => void;
   onCancel: () => void;
@@ -21,11 +23,16 @@ const EditCategory: React.FC<EditCategoryProps> = ({ category, onSave, onCancel 
     name: category.name || "",
     description: category.description || "",
     categoryImage: category.categoryImage || "",
+    categoryBannerImage: category.categoryBannerImage || "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
+  const uploaderRef = useRef<CloudinaryUploaderRef>(null);
+  const bannerUploaderRef = useRef<CloudinaryUploaderRef>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedBannerFiles, setSelectedBannerFiles] = useState<File[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,11 +45,24 @@ const EditCategory: React.FC<EditCategoryProps> = ({ category, onSave, onCancel 
     setIsLoading(true);
     
     try {
-      
+      let imageUrl = formData.categoryImage?.trim() || "";
+      let bannerImageUrl = formData.categoryBannerImage?.trim() || "";
+
+      if (selectedFiles.length > 0 && uploaderRef.current) {
+        const urls = await uploaderRef.current.uploadFiles();
+        imageUrl = urls[0] || imageUrl;
+      }
+
+      if (selectedBannerFiles.length > 0 && bannerUploaderRef.current) {
+        const urls = await bannerUploaderRef.current.uploadFiles();
+        bannerImageUrl = urls[0] || bannerImageUrl;
+      }
+
       await updateCategory(category._id, {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        categoryImage: formData.categoryImage.trim(),
+        categoryImage: imageUrl,
+        categoryBannerImage: bannerImageUrl || null,
       });
       
       showToast("Category updated successfully!", "success");
@@ -112,8 +132,8 @@ const EditCategory: React.FC<EditCategoryProps> = ({ category, onSave, onCancel 
         </div>
 
         <div>
-          <label htmlFor="categoryImage" className="block text-sm font-medium text-[#1c1c1c] mb-2 flex items-center gap-2">
-            Category Image URL
+          <label className="block text-sm font-medium text-[#1c1c1c] mb-2 flex items-center gap-2">
+            Category Image
             <button
               type="button"
               className="text-xs text-blue-600 underline hover:text-blue-800"
@@ -122,29 +142,60 @@ const EditCategory: React.FC<EditCategoryProps> = ({ category, onSave, onCancel 
               View Image Guidelines
             </button>
           </label>
-          <input
-            type="url"
-            id="categoryImage"
-            name="categoryImage"
-            value={formData.categoryImage}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="https://example.com/image.jpg"
+          <CloudinaryUploader
+            ref={uploaderRef}
+            multiple={false}
+            onFilesChange={setSelectedFiles}
+            buttonLabel="Select Category Image"
             disabled={isLoading}
           />
         </div>
 
-        {formData.categoryImage && (
+        {(selectedFiles.length > 0 || formData.categoryImage) && (
           <div>
             <label className="block text-sm font-medium text-[#1c1c1c] mb-2">
               Image Preview
             </label>
-            <div className="w-full max-w-[200px] aspect-square border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+            <div className="w-full max-w-[220px] aspect-square border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
               <img
-                src={formData.categoryImage}
+                src={selectedFiles.length > 0 ? URL.createObjectURL(selectedFiles[0]) : formData.categoryImage}
                 alt="Category preview"
                 className="w-full h-full object-cover"
                 style={{ aspectRatio: '1/1' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-[#1c1c1c] mb-2 flex items-center gap-2">
+            Category Banner Image
+            <span className="text-xs text-gray-500">(Recommended: 1920x600)</span>
+          </label>
+          <CloudinaryUploader
+            ref={bannerUploaderRef}
+            multiple={false}
+            onFilesChange={setSelectedBannerFiles}
+            buttonLabel="Select Banner Image"
+            disabled={isLoading}
+          />
+        </div>
+
+        {(selectedBannerFiles.length > 0 || formData.categoryBannerImage) && (
+          <div>
+            <label className="block text-sm font-medium text-[#1c1c1c] mb-2">
+              Banner Preview
+            </label>
+            <div className="w-full border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center" style={{ maxHeight: "200px" }}>
+              <img
+                src={selectedBannerFiles.length > 0 ? URL.createObjectURL(selectedBannerFiles[0]) : formData.categoryBannerImage}
+                alt="Banner preview"
+                className="w-full h-full object-cover"
+                style={{ aspectRatio: '16/5' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';

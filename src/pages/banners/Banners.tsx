@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { PlusIcon, EditIcon, TrashIcon, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
+import CloudinaryUploader, { CloudinaryUploaderRef } from "../../components/ui/CloudinaryUploader";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchBanners, addBanner, updateBanner, deleteBanner } from '../../lib/api';
 import { useToast } from '../../components/ui/toast';
@@ -10,15 +11,18 @@ import ImageGuidelinesModal from '../../components/ui/ImageGuidelinesModal';
 
 interface BannerForm {
   title: string;
-  image: string;
+  imageDesktop: string;
+  imageMobile?: string;
   link?: string;
   isActive: boolean;
 }
 
 interface BannerErrors {
   title?: string;
-  image?: string;
-  imageLoad?: boolean;
+  imageDesktop?: string;
+  imageMobile?: string;
+  imageLoadDesktop?: boolean;
+  imageLoadMobile?: boolean;
 }
 
 export const Banners: React.FC = () => {
@@ -28,12 +32,17 @@ export const Banners: React.FC = () => {
   const [editingBanner, setEditingBanner] = useState<any | null>(null);
   const [formData, setFormData] = useState<BannerForm>({
     title: '',
-    image: '',
+    imageDesktop: '',
+    imageMobile: '',
     link: '',
     isActive: true
   });
   const [errors, setErrors] = useState<BannerErrors>({});
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
+  const desktopUploaderRef = useRef<CloudinaryUploaderRef>(null);
+  const mobileUploaderRef = useRef<CloudinaryUploaderRef>(null);
+  const [desktopBannerFiles, setDesktopBannerFiles] = useState<File[]>([]);
+  const [mobileBannerFiles, setMobileBannerFiles] = useState<File[]>([]);
 
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -106,29 +115,54 @@ export const Banners: React.FC = () => {
       newErrors.title = 'Title is required';
     }
 
-    if (!formData.image.trim()) {
-      newErrors.image = 'Image URL is required';
+    if (desktopBannerFiles.length === 0 && !formData.imageDesktop.trim()) {
+      newErrors.imageDesktop = 'Desktop banner image is required';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleImageError = () => {
+  const handleImageError = (type: 'desktop' | 'mobile') => {
     setErrors(prev => ({
       ...prev,
-      imageLoad: true
+      [type === 'desktop' ? 'imageLoadDesktop' : 'imageLoadMobile']: true
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    if (editingBanner) {
-      updateMutation.mutate({ id: editingBanner._id, data: formData });
-    } else {
-      addMutation.mutate(formData);
+    try {
+      let desktopImageUrl = formData.imageDesktop?.trim() || '';
+      let mobileImageUrl = formData.imageMobile?.trim() || '';
+
+      // Upload desktop image if selected
+      if (desktopBannerFiles.length > 0 && desktopUploaderRef.current) {
+        const urls = await desktopUploaderRef.current.uploadFiles();
+        desktopImageUrl = urls[0] || desktopImageUrl;
+      }
+
+      // Upload mobile image if selected
+      if (mobileBannerFiles.length > 0 && mobileUploaderRef.current) {
+        const urls = await mobileUploaderRef.current.uploadFiles();
+        mobileImageUrl = urls[0] || mobileImageUrl;
+      }
+
+      const payload = {
+        ...formData,
+        imageDesktop: desktopImageUrl,
+        imageMobile: mobileImageUrl || null // Ensure null is sent when no mobile image
+      };
+
+      if (editingBanner) {
+        updateMutation.mutate({ id: editingBanner._id, data: payload });
+      } else {
+        addMutation.mutate(payload);
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to upload banner images', 'error');
     }
   };
 
@@ -136,7 +170,8 @@ export const Banners: React.FC = () => {
     setEditingBanner(banner);
     setFormData({
       title: banner.title,
-      image: banner.image,
+      imageDesktop: banner.imageDesktop || banner.image || '', // Fallback for legacy data
+      imageMobile: banner.imageMobile || '',
       link: banner.link || '',
       isActive: banner.isActive
     });
@@ -153,11 +188,14 @@ export const Banners: React.FC = () => {
   const resetForm = () => {
     setFormData({
       title: '',
-      image: '',
+      imageDesktop: '',
+      imageMobile: '',
       link: '',
       isActive: true
     });
     setErrors({});
+    setDesktopBannerFiles([]);
+    setMobileBannerFiles([]);
   };
 
   const handlePageChange = (page: number) => {
@@ -200,9 +238,9 @@ export const Banners: React.FC = () => {
                   <div key={banner._id} className="flex items-center justify-between p-4">
                     <div className="flex items-center space-x-4">
                       <div className="w-24 h-24 relative">
-                        {banner.image ? (
+                        {banner.imageDesktop ? (
                           <img
-                            src={banner.image}
+                            src={banner.imageDesktop}
                             alt={banner.title}
                             className="w-full h-full object-cover rounded-lg"
                             onError={(e) => {
@@ -216,6 +254,11 @@ export const Banners: React.FC = () => {
                           </div>
                         )}
                         <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${banner.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+                        {banner.imageMobile && (
+                          <div className="absolute bottom-2 right-2 bg-blue-500 text-white text-xs px-1 rounded">
+                            Mobile
+                          </div>
+                        )}
                       </div>
                       <div>
                         <h3 className="font-medium text-gray-900">{banner.title}</h3>
@@ -261,8 +304,8 @@ export const Banners: React.FC = () => {
       {/* Add/Edit Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white rounded-xl shadow-lg flex flex-col w-full max-w-lg max-h-[90vh]">
+            <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-semibold text-[#1c1c1c]">
                 {editingBanner ? 'Edit Banner' : 'Add Banner'}
               </h2>
@@ -277,7 +320,8 @@ export const Banners: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Title
@@ -296,9 +340,11 @@ export const Banners: React.FC = () => {
                 )}
               </div>
 
+              {/* Desktop Banner */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                  Image URL
+                  Desktop Banner Image (Required)
+                  <span className="text-xs text-gray-500">(2000x889 or 1920x900 recommended)</span>
                   <button
                     type="button"
                     className="text-xs text-blue-600 underline hover:text-blue-800"
@@ -307,33 +353,73 @@ export const Banners: React.FC = () => {
                     View Image Guidelines
                   </button>
                 </label>
-                <Input
-                  value={formData.image}
-                  onChange={(e) => handleInputChange('image', e.target.value)}
-                  className={errors.image ? 'border-red-500' : ''}
-                  placeholder="https://example.com/image.jpg"
+                <CloudinaryUploader
+                  ref={desktopUploaderRef}
+                  multiple={false}
+                  onFilesChange={setDesktopBannerFiles}
+                  buttonLabel="Select Desktop Banner"
                 />
-                {errors.image && (
+                {errors.imageDesktop && (
                   <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
                     <AlertCircle size={16} />
-                    {errors.image}
+                    {errors.imageDesktop}
                   </p>
                 )}
-                {formData.image && (
+                {(desktopBannerFiles.length > 0 || formData.imageDesktop) && (
                   <div className="mt-2">
-                    {errors.imageLoad ? (
+                    {errors.imageLoadDesktop ? (
                       <p className="text-red-500 text-sm flex items-center gap-1">
                         <AlertCircle size={16} />
-                        Failed to load image
+                        Failed to load desktop image
                       </p>
                     ) : (
-                      <div className="w-full max-w-[320px] aspect-[16/9] bg-gray-100 rounded border border-gray-200 flex items-center justify-center overflow-hidden">
+                      <div className="w-full max-w-[480px] aspect-[2.25/1] bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
                         <img
-                          src={formData.image}
-                          alt="Banner preview"
+                          src={desktopBannerFiles.length > 0 ? URL.createObjectURL(desktopBannerFiles[0]) : formData.imageDesktop}
+                          alt="Desktop banner preview"
                           className="w-full h-full object-cover"
-                          style={{ aspectRatio: '16/9' }}
-                          onError={handleImageError}
+                          style={{ aspectRatio: '2.25/1' }}
+                          onError={() => handleImageError('desktop')}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Banner */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                  Mobile Banner Image (Optional)
+                  <span className="text-xs text-gray-500">(768x1000 recommended)</span>
+                </label>
+                <CloudinaryUploader
+                  ref={mobileUploaderRef}
+                  multiple={false}
+                  onFilesChange={setMobileBannerFiles}
+                  buttonLabel="Select Mobile Banner"
+                />
+                {errors.imageMobile && (
+                  <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                    <AlertCircle size={16} />
+                    {errors.imageMobile}
+                  </p>
+                )}
+                {(mobileBannerFiles.length > 0 || formData.imageMobile) && (
+                  <div className="mt-2">
+                    {errors.imageLoadMobile ? (
+                      <p className="text-red-500 text-sm flex items-center gap-1">
+                        <AlertCircle size={16} />
+                        Failed to load mobile image
+                      </p>
+                    ) : (
+                      <div className="w-full max-w-[300px] aspect-[3/4] bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={mobileBannerFiles.length > 0 ? URL.createObjectURL(mobileBannerFiles[0]) : formData.imageMobile}
+                          alt="Mobile banner preview"
+                          className="w-full h-full object-cover"
+                          style={{ aspectRatio: '3/4' }}
+                          onError={() => handleImageError('mobile')}
                         />
                       </div>
                     )}
@@ -365,28 +451,31 @@ export const Banners: React.FC = () => {
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAddModalOpen(false);
-                    resetForm();
-                  }}
-                  className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                  disabled={addMutation.isPending || updateMutation.isPending}
-                >
-                  {addMutation.isPending || updateMutation.isPending
-                    ? 'Saving...'
-                    : editingBanner
-                    ? 'Update Banner'
-                    : 'Add Banner'}
-                </button>
+              </div>
+              <div className="border-t p-6">
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddModalOpen(false);
+                      resetForm();
+                    }}
+                    className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    disabled={addMutation.isPending || updateMutation.isPending}
+                  >
+                    {addMutation.isPending || updateMutation.isPending
+                      ? 'Saving...'
+                      : editingBanner
+                      ? 'Update Banner'
+                      : 'Add Banner'}
+                  </button>
+                </div>
               </div>
             </form>
             <ImageGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} />
