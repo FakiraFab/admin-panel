@@ -118,7 +118,7 @@ export const AddReel: React.FC = () => {
                 <img 
                   src={formData.thumbnail} 
                   alt="Thumbnail Preview" 
-                  className="w-full h-32 rounded-xl object-cover border border-gray-200 mt-2" 
+                  className="w-full h-full rounded-xl object-cover border border-gray-200 mt-2" 
                 />
               )}
             </div>
