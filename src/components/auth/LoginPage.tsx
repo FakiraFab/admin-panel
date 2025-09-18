@@ -79,9 +79,9 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-[#979797]">
+          {/* <div className="mt-6 text-center text-xs text-[#979797]">
             Demo password: admin123
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>

@@ -17,7 +17,7 @@ interface EditInquiryProps {
 
 
 const EditInquiry: React.FC<EditInquiryProps> = ({ inquiry, onSave, onCancel }) => {
-  console.log('Received inquiry prop:', inquiry);
+  // console.log('Received inquiry prop:', inquiry);
   
   const [formData, setFormData] = useState({
     userName: inquiry.userName || '',
@@ -62,7 +62,7 @@ const EditInquiry: React.FC<EditInquiryProps> = ({ inquiry, onSave, onCancel }) 
   };
 
   const buyOptions = ['Personal', 'Wholesale', 'Other'];
-  const statusOptions = ['Pending', 'Processing', 'Completed', 'Cancelled'];
+  const statusOptions = ['Pending', 'Processing','Completed', 'Cancelled'];
 
   return (
     <div className="bg-white rounded-xl">

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Pagination } from "../../components/ui/Pagination";
 import { Filter, defaultSortOptions, inquirySortOptions } from "../../components/ui/filter";
-import { EditIcon, TrashIcon, ChevronDown, ChevronUp, Package, MessageSquare } from 'lucide-react';
+import { ChevronDown, ChevronUp, EditIcon, MessageSquare, TrashIcon, Filter as FilterIcon, Package } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
+import { InquiryFilters } from '../../components/ui/inquiry-filters';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchInquiries, deleteInquiry } from '../../lib/api';
+import { searchInquiries, deleteInquiry } from '../../lib/api';
 import { useToast } from '../../components/ui/toast';
 import type { Enquiry } from '../../types';
 import EditInquiry from './EditInquiry';
@@ -12,15 +13,70 @@ import EditInquiry from './EditInquiry';
 const InquiryList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [sortOrder, setSortOrder] = useState('latest');
+  const [sortOrder, setSortOrder] = useState('-createdAt');
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [searchFilters, setSearchFilters] = useState({
+    userName: '',
+    userEmail: '',
+    whatsappNumber: '',
+    buyOption: '',
+    location: '',
+    companyName: '',
+    productName: '',
+    variant: '',
+    status: '',
+    createdFrom: '',
+    createdTo: '',
+    updatedFrom: '',
+    updatedTo: ''
+  });
+
+  const handleFilterChange = (key: string, value: string) => {
+    // Convert "all" back to empty string for filtering logic
+    const filterValue = value === "all" ? "" : value;
+    
+    setSearchFilters(prev => ({
+      ...prev,
+      [key]: filterValue
+    }));
+  };
+
+  // Convert empty values to "all" for display in the select components
+  const getDisplayFilters = () => {
+    const displayFilters = { ...searchFilters };
+    if (!displayFilters.buyOption) displayFilters.buyOption = 'all';
+    if (!displayFilters.status) displayFilters.status = 'all';
+    return displayFilters;
+  };
+
+  const handleClearFilters = () => {
+    setSearchFilters({
+      userName: '',
+      userEmail: '',
+      whatsappNumber: '',
+      buyOption: '',
+      location: '',
+      companyName: '',
+      productName: '',
+      variant: '',
+      status: '',
+      createdFrom: '',
+      createdTo: '',
+      updatedFrom: '',
+      updatedTo: ''
+    });
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = Object.values(searchFilters).some(value => value !== '');
 
   const { data: response, isLoading, error } = useQuery({
-    queryKey: ['inquiries', currentPage, itemsPerPage, sortOrder, status],
-    queryFn: () => fetchInquiries({ 
+    queryKey: ['inquiries', currentPage, itemsPerPage, sortOrder, searchFilters],
+    queryFn: () => searchInquiries({ 
       page: currentPage, 
       limit: itemsPerPage,
-      sort: sortOrder, 
-      status
+      sort: sortOrder,
+      ...searchFilters
     }),
   });
 
@@ -42,6 +98,21 @@ const InquiryList: React.FC = () => {
         return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getInquiryStatusColor = (status: string) => {
+    switch (status) {
+      case 'Completed':
+        return 'bg-green-100 text-green-800 text-sm px-1 rounded-md w-fit';
+      case 'Processing':
+        return 'bg-yellow-100 text-red-800 text-sm px-1 rounded-md w-fit';
+      case 'Pending':
+        return 'bg-blue-100 text-blue-800 text-sm px-1 rounded-md w-fit';  
+      case 'Cancelled':
+        return 'bg-red-100 text-red-800 text-sm px-1 rounded-md w-fit';  
+      default:
+        return 'bg-yellow-100 text-yellow-800 text-sm px-1 rounded-md w-fit';
     }
   };
 
@@ -86,13 +157,37 @@ const InquiryList: React.FC = () => {
             {inquiries.length} {inquiries.length === 1 ? 'inquiry' : 'inquiries'} found
           </div>
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => setIsFiltersOpen(true)}
+            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors ${
+              hasActiveFilters
+                ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <FilterIcon className="w-4 h-4" />
+            Filters
+            {hasActiveFilters && (
+              <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
+                {Object.values(searchFilters).filter(value => value !== '').length}
+              </span>
+            )}
+          </button>
           <Filter
             selectedSort={sortOrder}
             onSortChange={setSortOrder}
             sortOptions={inquirySortOptions}
           />
         </div>
+
+        <InquiryFilters
+          filters={getDisplayFilters()}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+          isOpen={isFiltersOpen}
+          onClose={() => setIsFiltersOpen(false)}
+        />
       </div>
 
       <Card className="border-0 shadow-sm">
@@ -160,6 +255,9 @@ const InquiryList: React.FC = () => {
                               </div>
                               <div className="text-sm text-gray-500">
                                 {inquiry.variant || 'No variant'}
+                              </div>
+                              <div className={getInquiryStatusColor(inquiry.status)}>
+                                {inquiry.status||'No Staus'}
                               </div>
                             </div>
                           </div>
@@ -270,8 +368,8 @@ const InquiryList: React.FC = () => {
                           <h3 className="text-sm font-medium text-gray-900">
                             {inquiry.productName}
                           </h3>
-                          <p className="text-xs text-gray-500">
-                            {inquiry.userName} • {inquiry.buyOption}
+                          <p className="text-xs text-gray-500 ">
+                            {inquiry.userName} • {inquiry.buyOption} • {inquiry.status}
                           </p>
                         </div>
                       </div>
