@@ -11,6 +11,49 @@ interface PaginationParams {
 }
 
 
+interface SearchParams extends PaginationParams {
+  q?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  material?: string;
+  style?: string;
+}
+
+export const searchProducts = async ({
+  q = '',
+  page = 1,
+  limit = 10,
+  sort = '-createdAt',
+  category,
+  subcategory,
+  minPrice,
+  maxPrice,
+  material,
+  style
+}: SearchParams = {}) => {
+  const { data } = await axios.get(`${API_URL}/products/search`, {
+    params: {
+      q,
+      page,
+      limit,
+      sort,
+      ...(category && { category }),
+      ...(subcategory && { subcategory }),
+      ...(minPrice && { minPrice }),
+      ...(maxPrice && { maxPrice }),
+      ...(material && { material }),
+      ...(style && { style })
+    }
+  });
+  return {
+    data: data.data,
+    total: data.total,
+    totalPages: Math.ceil(data.total / limit),
+    suggestions: data.suggestions,
+    query: data.query
+  };
+};
+
 export const fetchProducts = async ({ 
   page = 1, 
   limit = 10, 
@@ -60,7 +103,7 @@ export const fetchSubcategories = async ({ page = 1, limit = 10, categoryId }: P
 
 export const addProduct = async (product: any) => {
   const { data } = await axios.post(`${API_URL}/products`, product);
-  console.log(data.data);
+  // console.log(data.data);
   return data.data;
 };
 
@@ -122,6 +165,71 @@ export const deleteBanner = async (id: string) => {
 };
 
 // Fixed inquiry API functions to use consistent base URL
+interface InquirySearchParams extends PaginationParams {
+  userName?: string;
+  userEmail?: string;
+  whatsappNumber?: string;
+  buyOption?: string;
+  location?: string;
+  companyName?: string;
+  productName?: string;
+  variant?: string;
+  status?: string;
+  createdFrom?: string;
+  createdTo?: string;
+  updatedFrom?: string;
+  updatedTo?: string;
+}
+
+export const searchInquiries = async ({
+  page = 1,
+  limit = 10,
+  sort = "-createdAt",
+  userName,
+  userEmail,
+  whatsappNumber,
+  buyOption,
+  location,
+  companyName,
+  productName,
+  variant,
+  status,
+  createdFrom,
+  createdTo,
+  updatedFrom,
+  updatedTo,
+}: InquirySearchParams = {}): Promise<{ data: any[]; total: number; totalPages: number }> => {
+  const response = await axios.get(`${API_URL}/inquiry/search`, {
+    params: {
+      page,
+      limit,
+      sort,
+      ...(userName && { userName }),
+      ...(userEmail && { userEmail }),
+      ...(whatsappNumber && { whatsappNumber }),
+      ...(buyOption && { buyOption }),
+      ...(location && { location }),
+      ...(companyName && { companyName }),
+      ...(productName && { productName }),
+      ...(variant && { variant }),
+      ...(status && { status }),
+      ...(createdFrom && { createdFrom }),
+      ...(createdTo && { createdTo }),
+      ...(updatedFrom && { updatedFrom }),
+      ...(updatedTo && { updatedTo }),
+    }
+  });
+  
+  const resData = response.data || {};
+  const pagination = resData.pagination || {};
+  
+  return {
+    data: resData.data || [],
+    total: pagination.total || 0,
+    totalPages: pagination.pages || Math.ceil((pagination.total || 0) / limit)
+  };
+};
+
 interface InquiryParams extends PaginationParams {
   status?: string;
   product?: string;
@@ -206,7 +314,7 @@ export const fetchRegistrations = async ({ page = 1, limit = 10 }: PaginationPar
 
 export const updateRegistration = async (id: string, status: string) => {
   const { data } = await axios.patch(`${API_URL}/workshop/${id}`, { status });
-  console.log(data.data)
+  // console.log(data.data)
   return data.data;
 };
 

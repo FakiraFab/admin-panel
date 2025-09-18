@@ -29,7 +29,7 @@ export const SubcategoryList: React.FC = () => {
     queryKey: ["subcategories", currentPage, itemsPerPage],
     queryFn: async () => {
       const response = await fetchSubcategories({ page: currentPage, limit: itemsPerPage });
-      console.log("fetchSubcategories Response:", response);
+      // console.log("fetchSubcategories Response:", response);
       return response; // Directly return the response
     }
   });

@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { PlusIcon, EditIcon, TrashIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Card, CardContent } from "../../components/ui/card";
+import { SearchInput } from "../../components/ui/search-input";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchProducts, deleteProduct } from "../../lib/api";
+import { fetchProducts, deleteProduct, searchProducts } from "../../lib/api";
 import { EditProduct } from "./EditProduct";
 import { useToast } from "../../components/ui/toast";
 import { Pagination } from "../../components/ui/Pagination";
@@ -19,21 +20,46 @@ export const ProductList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [sortOrder, setSortOrder] = useState('-createdAt');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<{
+    materials?: string[];
+    styles?: string[];
+    colors?: string[];
+  }>({});
 
   interface ProductApiResponse {
     data: any[];
     total: number;
     totalPages: number;
+    suggestions?: {
+      materials?: string[];
+      styles?: string[];
+      colors?: string[];
+    };
   }
 
   const { data: productData, isLoading, error } = useQuery<ProductApiResponse>({
-    queryKey: ["products", currentPage, itemsPerPage, sortOrder],
-    queryFn: () => fetchProducts({ 
-      page: currentPage, 
-      limit: itemsPerPage,
-      sort: sortOrder
-    })
+    queryKey: ["products", currentPage, itemsPerPage, sortOrder, searchQuery],
+    queryFn: () => searchQuery
+      ? searchProducts({ 
+          q: searchQuery,
+          page: currentPage, 
+          limit: itemsPerPage,
+          sort: sortOrder
+        })
+      : fetchProducts({ 
+          page: currentPage, 
+          limit: itemsPerPage,
+          sort: sortOrder
+        })
   });
+
+  // Update search suggestions when data changes
+  React.useEffect(() => {
+    if (productData?.suggestions) {
+      setSearchSuggestions(productData.suggestions);
+    }
+  }, [productData?.suggestions]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -90,6 +116,15 @@ export const ProductList: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
         <h1 className="text-xl sm:text-2xl font-bold text-[#1c1c1c]">Products</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSearch={setSearchQuery}
+            placeholder="Search products..."
+            suggestions={searchSuggestions}
+            isLoading={isLoading}
+            className="w-full sm:w-96"
+          />
           <Filter
             selectedSort={sortOrder}
             onSortChange={setSortOrder}

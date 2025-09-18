@@ -138,7 +138,7 @@ export const AddProduct: React.FC = () => {
     queryFn: () => fetchCategories({ limit: 1000 }),
   });
 
-  console.log('categoriesResponse',categoriesResponse);
+  // console.log('categoriesResponse',categoriesResponse);
 
   const { data: subcategoriesResponse, isLoading: subcategoriesLoading } = useQuery<SubcategoryApiResponse>({
     queryKey: ["subcategories", formData.category],
@@ -146,7 +146,7 @@ export const AddProduct: React.FC = () => {
     enabled: !!formData.category,
   });
 
-  console.log('subcategoriesResponse',subcategoriesResponse);
+  // console.log('subcategoriesResponse',subcategoriesResponse);
 
   const mutation = useMutation({
     mutationFn: addProduct,
