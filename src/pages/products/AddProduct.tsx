@@ -61,6 +61,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchCategories, fetchSubcategories, addProduct } from "../../lib/api";
 import { useToast } from "../../components/ui/toast";
+import { Navigate, useNavigate } from "react-router-dom";
 
 // Cloudinary upload widget
 declare global {
@@ -148,6 +149,8 @@ export const AddProduct: React.FC = () => {
 
   // console.log('subcategoriesResponse',subcategoriesResponse);
 
+  const navigate = useNavigate();
+
   const mutation = useMutation({
     mutationFn: addProduct,
     onSuccess: (_data) => {
@@ -177,13 +180,34 @@ export const AddProduct: React.FC = () => {
       setErrors({});
       setImageErrors({});
       setIsSubmitting(false);
+      navigate('/products')
+      
     },
     onError: (error: any) => {
-      const errorMessage = error.message || "Failed to add product";
+      let errorMessage = "Failed to add product";
+    
+      // Handle Axios or Fetch error responses
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (data.details && Array.isArray(data.details) && data.details.length > 0) {
+          // Extract messages from validation errors
+          const detailMessages = data.details.map((d: any) => `${d.field}: ${d.message}`).join(", ");
+          errorMessage = `${data.message || "Validation error"} - ${detailMessages}`;
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+    
+      console.error("Add Product Error:", error);
+      alert(errorMessage);
       showToast(errorMessage, 'error');
       setErrors({ submit: errorMessage });
       setIsSubmitting(false);
     },
+    
+    
   });
 
   const handleInputChange = (field: string, value: any) => {
@@ -266,7 +290,15 @@ export const AddProduct: React.FC = () => {
     if (!formData.name.trim()) newErrors.name = "Product name is required";
     if (!formData.category) newErrors.category = "Category is required";
     if (!formData.subcategory) newErrors.subcategory = "Subcategory is required";
-    if (!formData.description.trim()) newErrors.description = "Description is required";
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = "Description must be at least 10 characters long";
+    } else if (formData.description.trim().length > 500) {
+      newErrors.description = "Description cannot exceed 500 characters";
+    }
+    
+    if(!formData.fullDescription.trim()) newErrors.fullDescription = "Full Description is required";
     if (!formData.price || Number(formData.price) <= 0) newErrors.price = "Valid price is required";
     if (!formData.quantity || Number(formData.quantity) <= 0) newErrors.quantity = "Valid quantity is required";
     if (!formData.unit) newErrors.unit = "Unit is required";
@@ -541,6 +573,8 @@ export const AddProduct: React.FC = () => {
                 placeholder="Enter detailed product description"
                 rows={5}
               />
+              {errors.fullDescription && <p className="text-red-500 text-sm mt-1 flex items-center gap-1"><AlertCircle size={16} />{errors.fullDescription}</p>}
+
             </div>
           </CardContent>
         </Card>
