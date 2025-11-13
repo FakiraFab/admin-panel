@@ -91,3 +91,35 @@ export interface InquiryResponse {
     pages: number;
   };
 }
+
+export interface Blog {
+  _id: string;
+  title: string;
+  shortDescription: string;
+  content: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+  category: string;
+  tags?: string[];
+  author: string;
+  image?: string;
+  published: boolean;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface BlogFormData {
+  title: string;
+  shortDescription: string;
+  content: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+  category: string;
+  tags?: string[];
+  author: string;
+  image?: string;
+  published: boolean;
+}

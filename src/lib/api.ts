@@ -362,3 +362,57 @@ export const toggleReelVisibility = async (id: string) => {
   const { data } = await axios.patch(`${API_URL}/reels/${id}/toggle-visibility`);
   return data.data;
 };
+
+// Blog API functions
+interface BlogSearchParams extends PaginationParams {
+  q?: string;
+  category?: string;
+}
+
+export const fetchBlogs = async ({
+  page = 1,
+  limit = 10,
+  sort = "-createdAt",
+  category,
+  q
+}: BlogSearchParams = {}) => {
+  const { data } = await axios.get(`${API_URL}/blogs`, {
+    params: {
+      page,
+      limit,
+      sort,
+      ...(category && { category }),
+      ...(q && { q })
+    }
+  });
+  return {
+    data: data.data,
+    total: data.pagination?.total || data.total || 0,
+    totalPages: data.pagination?.pages || Math.ceil((data.pagination?.total || data.total || 0) / limit)
+  };
+};
+
+export const fetchBlog = async (id: string) => {
+  const { data } = await axios.get(`${API_URL}/blogs/${id}`);
+  return data.data;
+};
+
+export const createBlog = async (blog: any) => {
+  const { data } = await axios.post(`${API_URL}/blogs`, blog);
+  return data.data;
+};
+
+export const updateBlog = async (id: string, blog: any) => {
+  const { data } = await axios.put(`${API_URL}/blogs/${id}`, blog);
+  return data.data;
+};
+
+export const deleteBlog = async (id: string) => {
+  const { data } = await axios.delete(`${API_URL}/blogs/${id}`);
+  return data.data;
+};
+
+export const toggleBlogPublish = async (id: string) => {
+  const { data } = await axios.patch(`${API_URL}/blogs/${id}/publish`);
+  return data.data;
+};

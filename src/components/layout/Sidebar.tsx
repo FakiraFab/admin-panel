@@ -5,6 +5,7 @@ import {
   LayersIcon,
   ShoppingCartIcon,
   VideoIcon,
+  BookOpenIcon,
 } from "lucide-react";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -71,6 +72,14 @@ export const Sidebar: React.FC = () => {
       subItems: [
         { title: "Reels List", path: "/reels" },
         { title: "Add Reel", path: "/reels/add" },
+      ],
+    },
+    {
+      icon: <BookOpenIcon className="w-6 h-6" />,
+      title: "Blogs",
+      subItems: [
+        { title: "Blog List", path: "/blogs" },
+        { title: "Create Blog", path: "/blogs/create" },
       ],
     },
   ];

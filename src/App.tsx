@@ -22,6 +22,9 @@ import { WorkshopsList } from "./pages/classRegistration/WorkshopsList";
 import { RegistrationList } from "./pages/classRegistration/RegistrationList";
 import { ReelsList } from "./pages/reels/ReelsList";
 import { AddReel } from "./pages/reels/AddReel";
+import { BlogList } from "./pages/blogs/BlogList";
+import { AddBlog } from "./pages/blogs/AddBlog";
+import { EditBlog } from "./pages/blogs/EditBlog";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -77,6 +80,11 @@ export const App: React.FC = () => {
               {/* Reels routes */}
               <Route path="reels" element={<ReelsList />} />
               <Route path="reels/add" element={<AddReel />} />
+
+              {/* Blogs routes */}
+              <Route path="blogs" element={<BlogList />} />
+              <Route path="blogs/create" element={<AddBlog />} />
+              <Route path="blogs/:id/edit" element={<EditBlog />} />
             </Route>
             
             {/* Catch all route */}
