@@ -67,11 +67,11 @@ export const EditorComponent: React.FC<EditorComponentProps> = ({
           class: Image,
           config: {
             endpoints: {
-              byUrl: "placeholder", // Not used, but required by the plugin
+              byUrl: "NOT_IMPLEMENTED", // Image upload by URL - using direct URL input only
             },
             uploader: {
               uploadByUrl: async (url: string) => {
-                // Simple URL validation
+                // Simple URL validation - accepts any URL provided by user
                 return {
                   success: 1,
                   file: {

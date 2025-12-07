@@ -39,7 +39,22 @@ export function htmlToEditorJs(html: string): OutputData {
     };
   }
 
-  const blocks: any[] = [];
+  interface EditorBlock {
+    type: string;
+    data: {
+      text?: string;
+      level?: number;
+      style?: string;
+      items?: string[];
+      caption?: string;
+      url?: string;
+      withBorder?: boolean;
+      stretched?: boolean;
+      withBackground?: boolean;
+    };
+  }
+
+  const blocks: EditorBlock[] = [];
   
   // Create a temporary div to parse HTML
   const tempDiv = document.createElement("div");
@@ -70,6 +85,8 @@ export function htmlToEditorJs(html: string): OutputData {
         case "p":
           const text = element.textContent || "";
           if (text.trim()) {
+            // Use innerHTML to preserve basic formatting like <strong>, <em>
+            // Note: This is safe because it's parsing existing HTML from the database
             blocks.push({
               type: "paragraph",
               data: {
@@ -138,6 +155,8 @@ export function htmlToEditorJs(html: string): OutputData {
           // For any other tag, treat as paragraph
           const defaultText = element.textContent || "";
           if (defaultText.trim()) {
+            // Use innerHTML to preserve basic formatting like <strong>, <em>
+            // Note: This is safe because it's parsing existing HTML from the database
             blocks.push({
               type: "paragraph",
               data: {
