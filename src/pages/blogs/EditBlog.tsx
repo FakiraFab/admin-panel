@@ -9,6 +9,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchBlog, updateBlog } from "../../lib/api";
 import { useToast } from "../../components/ui/toast";
 import { BlogFormData, Blog } from "../../types";
+import { EditorComponent } from "../../components/EditorComponent";
+import { OutputData } from "@editorjs/editorjs";
+import { editorJsToHtml, htmlToEditorJs } from "../../utils/editorjsConverter";
 
 const BLOG_CATEGORIES = [
   "Styling Tips",
@@ -44,6 +47,8 @@ export const EditBlog: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [keywordInput, setKeywordInput] = useState("");
   const [tagInput, setTagInput] = useState("");
+  const [editorData, setEditorData] = useState<OutputData>(htmlToEditorJs(""));
+  const [editorKey, setEditorKey] = useState(0);
 
   const { data: blog, isLoading, error } = useQuery<Blog>({
     queryKey: ["blog", id],
@@ -66,6 +71,11 @@ export const EditBlog: React.FC = () => {
         image: blog.image || "",
         published: blog.published,
       });
+      // Convert existing HTML content to Editor.js format
+      const initialEditorData = htmlToEditorJs(blog.content || "");
+      setEditorData(initialEditorData);
+      // Force re-render of editor with new data
+      setEditorKey((prev) => prev + 1);
     }
   }, [blog]);
 
@@ -150,6 +160,15 @@ export const EditBlog: React.FC = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleEditorChange = (data: OutputData) => {
+    setEditorData(data);
+    const htmlContent = editorJsToHtml(data);
+    setFormData((prev) => ({ ...prev, content: htmlContent }));
+    if (errors.content) {
+      setErrors((prev) => ({ ...prev, content: "" }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -297,12 +316,12 @@ export const EditBlog: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Blog Content *
                 </label>
-                <Textarea
-                  value={formData.content}
-                  onChange={(e) => handleInputChange("content", e.target.value)}
+                <EditorComponent
+                  key={editorKey}
+                  initialData={editorData}
+                  onChange={handleEditorChange}
+                  placeholder="Start writing your blog content..."
                   className={errors.content ? "border-red-500" : ""}
-                  placeholder="Write your blog content here..."
-                  rows={10}
                 />
                 {errors.content && (
                   <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
