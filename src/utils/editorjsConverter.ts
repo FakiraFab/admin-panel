@@ -14,7 +14,12 @@ export function editorJsToHtml(data: OutputData): string {
   
   try {
     const html = edjsParser.parse(data);
-    return html.join("");
+    // Check if html is an array before calling join
+    if (Array.isArray(html)) {
+      return html.join("");
+    }
+    // If not an array, return it as string
+    return String(html);
   } catch (error) {
     console.error("Error converting Editor.js to HTML:", error);
     return "";

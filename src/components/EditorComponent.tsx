@@ -102,7 +102,7 @@ export const EditorComponent: React.FC<EditorComponentProps> = ({
     initEditor();
 
     return () => {
-      if (editorRef.current) {
+      if (editorRef.current && typeof editorRef.current.destroy === 'function') {
         try {
           editorRef.current.destroy();
           editorRef.current = null;
