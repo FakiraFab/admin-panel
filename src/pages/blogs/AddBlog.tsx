@@ -9,6 +9,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createBlog } from "../../lib/api";
 import { useToast } from "../../components/ui/toast";
 import { BlogFormData } from "../../types";
+import { EditorComponent } from "../../components/EditorComponent";
+import { OutputData } from "@editorjs/editorjs";
+import { editorJsToHtml, htmlToEditorJs } from "../../utils/editorjsConverter";
 
 const BLOG_CATEGORIES = [
   "Styling Tips",
@@ -43,6 +46,7 @@ export const AddBlog: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [keywordInput, setKeywordInput] = useState("");
   const [tagInput, setTagInput] = useState("");
+  const [editorData, setEditorData] = useState<OutputData>(htmlToEditorJs(""));
 
   const mutation = useMutation({
     mutationFn: createBlog,
@@ -124,6 +128,15 @@ export const AddBlog: React.FC = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleEditorChange = (data: OutputData) => {
+    setEditorData(data);
+    const htmlContent = editorJsToHtml(data);
+    setFormData((prev) => ({ ...prev, content: htmlContent }));
+    if (errors.content) {
+      setErrors((prev) => ({ ...prev, content: "" }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -243,12 +256,11 @@ export const AddBlog: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Blog Content *
                 </label>
-                <Textarea
-                  value={formData.content}
-                  onChange={(e) => handleInputChange("content", e.target.value)}
+                <EditorComponent
+                  initialData={editorData}
+                  onChange={handleEditorChange}
+                  placeholder="Start writing your blog content..."
                   className={errors.content ? "border-red-500" : ""}
-                  placeholder="Write your blog content here..."
-                  rows={10}
                 />
                 {errors.content && (
                   <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
