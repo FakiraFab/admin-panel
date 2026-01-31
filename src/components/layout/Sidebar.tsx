@@ -7,6 +7,7 @@ import {
   VideoIcon,
   BookOpenIcon,
   Users as UsersIcon,
+  CreditCard,
 } from "lucide-react";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -58,6 +59,11 @@ export const Sidebar: React.FC = () => {
       icon: <BoxIcon className="w-6 h-6" />,
       title: "Orders",
       path: "/orders",
+    },
+    {
+      icon: <CreditCard className="w-6 h-6" />,
+      title: "Payments",
+      path: "/payments",
     },
     {
       icon: <FilePlusIcon className="w-6 h-6" />,

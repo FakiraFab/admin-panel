@@ -33,6 +33,9 @@ import { UserList } from "./pages/users/UserList";
 import { OrderList } from "./pages/orders/OrderList";
 import { OrderDetails } from "./pages/orders/OrderDetails";
 
+// Phase 2 - Payment Management
+import { PaymentList } from "./pages/payments/PaymentList";
+
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,6 +85,9 @@ export const App: React.FC = () => {
               {/* Orders routes - Phase 2 Enhanced */}
               <Route path="orders" element={<OrderList />} />
               <Route path="orders/:id" element={<OrderDetails />} />
+              
+              {/* Payments routes - Phase 2 */}
+              <Route path="payments" element={<PaymentList />} />
               
               {/* Workshop routes */}
               <Route path="class-registration" element={<WorkshopsList />} />
