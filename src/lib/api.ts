@@ -416,3 +416,101 @@ export const toggleBlogPublish = async (id: string) => {
   const { data } = await axios.patch(`${API_URL}/blogs/${id}/publish`);
   return data.data;
 };
+
+// ============================================================================
+// Phase 2: User Management APIs
+// ============================================================================
+
+import type { User, UserSearchParams, Order, OrderSearchParams, Payment, PaymentSearchParams, RefundRequest, Address } from '../types/phase2';
+
+export const getUsers = async (params: UserSearchParams) => {
+  const { data } = await axios.get(`${API_URL}/admin/users`, { params });
+  return {
+    data: data.data,
+    total: data.pagination?.total || 0,
+    totalPages: data.pagination?.pages || 1
+  };
+};
+
+export const getUserById = async (id: string): Promise<User> => {
+  const { data } = await axios.get(`${API_URL}/admin/users/${id}`);
+  return data.data;
+};
+
+export const updateUser = async (id: string, userData: Partial<User>): Promise<User> => {
+  const { data } = await axios.patch(`${API_URL}/admin/users/${id}`, userData);
+  return data.data;
+};
+
+export const deleteUser = async (id: string): Promise<void> => {
+  await axios.delete(`${API_URL}/admin/users/${id}`);
+};
+
+// ============================================================================
+// Phase 2: Enhanced Order Management APIs
+// ============================================================================
+
+export const getOrders = async (params: OrderSearchParams) => {
+  const { data } = await axios.get(`${API_URL}/orders/admin/all`, { params });
+  return {
+    data: data.data,
+    total: data.pagination?.total || 0,
+    totalPages: data.pagination?.pages || 1
+  };
+};
+
+export const getOrderById = async (id: string): Promise<Order> => {
+  const { data } = await axios.get(`${API_URL}/orders/${id}`);
+  return data.data;
+};
+
+export const updateOrderStatus = async (id: string, statusData: { status: string; note?: string; estimatedDeliveryDate?: string }) => {
+  const { data } = await axios.patch(`${API_URL}/orders/admin/${id}/status`, statusData);
+  return data.data;
+};
+
+export const cancelOrder = async (id: string, reason: string) => {
+  const { data } = await axios.post(`${API_URL}/orders/${id}/cancel`, { reason });
+  return data.data;
+};
+
+// ============================================================================
+// Phase 2: Payment Management APIs
+// ============================================================================
+
+export const getPayments = async (params: PaymentSearchParams) => {
+  const { data } = await axios.get(`${API_URL}/admin/payments`, { params });
+  return {
+    data: data.data,
+    total: data.pagination?.total || 0,
+    totalPages: data.pagination?.pages || 1
+  };
+};
+
+export const getPaymentById = async (id: string): Promise<Payment> => {
+  const { data } = await axios.get(`${API_URL}/admin/payments/${id}`);
+  return data.data;
+};
+
+export const initiateRefund = async (paymentId: string, refundData: RefundRequest): Promise<Payment> => {
+  const { data } = await axios.post(`${API_URL}/admin/payments/${paymentId}/refund`, refundData);
+  return data.data;
+};
+
+// ============================================================================
+// Phase 2: Address Management APIs
+// ============================================================================
+
+export const getUserAddresses = async (userId: string): Promise<Address[]> => {
+  const { data } = await axios.get(`${API_URL}/admin/users/${userId}/addresses`);
+  return data.data;
+};
+
+export const updateAddress = async (id: string, addressData: Partial<Address>): Promise<Address> => {
+  const { data } = await axios.patch(`${API_URL}/admin/addresses/${id}`, addressData);
+  return data.data;
+};
+
+export const deleteAddress = async (id: string): Promise<void> => {
+  await axios.delete(`${API_URL}/admin/addresses/${id}`);
+};

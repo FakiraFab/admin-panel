@@ -26,6 +26,17 @@ import { BlogList } from "./pages/blogs/BlogList";
 import { AddBlog } from "./pages/blogs/AddBlog";
 import { EditBlog } from "./pages/blogs/EditBlog";
 
+// Phase 2 - User Management
+import { UserList } from "./pages/users/UserList";
+import { CustomerAddresses } from "./pages/users/CustomerAddresses";
+
+// Phase 2 - Enhanced Order Management
+import { OrderList } from "./pages/orders/OrderList";
+import { OrderDetails } from "./pages/orders/OrderDetails";
+
+// Phase 2 - Payment Management
+import { PaymentList } from "./pages/payments/PaymentList";
+
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,6 +68,10 @@ export const App: React.FC = () => {
               {/* Redirect root to products */}
               <Route index element={<Navigate to="/products" replace />} />
               
+              {/* Phase 2 - Users routes */}
+              <Route path="users" element={<UserList />} />
+              <Route path="users/:userId/addresses" element={<CustomerAddresses />} />
+              
               {/* Products routes */}
               <Route path="products" element={<ProductList />} />
               <Route path="products/add" element={<AddProduct />} />
@@ -69,8 +84,12 @@ export const App: React.FC = () => {
               <Route path="subcategories" element={<SubcategoryList/>} />
               <Route path="subcategories/add" element={<AddSubcategory/>} />
               
-              {/* Orders route */}
-              <Route path="orders" element={<InquiryList />} />
+              {/* Orders routes - Phase 2 Enhanced */}
+              <Route path="orders" element={<OrderList />} />
+              <Route path="orders/:id" element={<OrderDetails />} />
+              
+              {/* Payments routes - Phase 2 */}
+              <Route path="payments" element={<PaymentList />} />
               
               {/* Workshop routes */}
               <Route path="class-registration" element={<WorkshopsList />} />
