@@ -28,6 +28,7 @@ import { EditBlog } from "./pages/blogs/EditBlog";
 
 // Phase 2 - User Management
 import { UserList } from "./pages/users/UserList";
+import { CustomerAddresses } from "./pages/users/CustomerAddresses";
 
 // Phase 2 - Enhanced Order Management
 import { OrderList } from "./pages/orders/OrderList";
@@ -69,6 +70,7 @@ export const App: React.FC = () => {
               
               {/* Phase 2 - Users routes */}
               <Route path="users" element={<UserList />} />
+              <Route path="users/:userId/addresses" element={<CustomerAddresses />} />
               
               {/* Products routes */}
               <Route path="products" element={<ProductList />} />

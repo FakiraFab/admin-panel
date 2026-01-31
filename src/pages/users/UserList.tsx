@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users, Search, Filter as FilterIcon, Eye, Edit, Trash2, Ban, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Search, Filter as FilterIcon, Eye, Edit, Trash2, Ban, CheckCircle, MapPin } from 'lucide-react';
 import { getUsers, deleteUser, updateUser } from '../../lib/api';
 import { useToast } from '../../components/ui/toast';
 import { Pagination } from '../../components/ui/Pagination';
@@ -12,6 +13,7 @@ import type { User } from '../../types/phase2';
 import { format } from 'date-fns';
 
 export const UserList: React.FC = () => {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
@@ -262,6 +264,13 @@ export const UserList: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => navigate(`/users/${user._id}/addresses`)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                            title="View Addresses"
+                          >
+                            <MapPin className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => setSelectedUser(user)}
                             className="text-blue-600 hover:text-blue-900"
