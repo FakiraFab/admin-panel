@@ -6,6 +6,7 @@ import {
   ShoppingCartIcon,
   VideoIcon,
   BookOpenIcon,
+  Users as UsersIcon,
 } from "lucide-react";
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -24,6 +25,11 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
 
   const menuItems: MenuItem[] = [
+    {
+      icon: <UsersIcon className="w-6 h-6" />,
+      title: "Users",
+      path: "/users",
+    },
     {
       icon: <ShoppingCartIcon className="w-6 h-6" />,
       title: "Products",

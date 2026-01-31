@@ -26,6 +26,9 @@ import { BlogList } from "./pages/blogs/BlogList";
 import { AddBlog } from "./pages/blogs/AddBlog";
 import { EditBlog } from "./pages/blogs/EditBlog";
 
+// Phase 2 - User Management
+import { UserList } from "./pages/users/UserList";
+
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,6 +59,9 @@ export const App: React.FC = () => {
             >
               {/* Redirect root to products */}
               <Route index element={<Navigate to="/products" replace />} />
+              
+              {/* Phase 2 - Users routes */}
+              <Route path="users" element={<UserList />} />
               
               {/* Products routes */}
               <Route path="products" element={<ProductList />} />
