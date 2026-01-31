@@ -29,6 +29,10 @@ import { EditBlog } from "./pages/blogs/EditBlog";
 // Phase 2 - User Management
 import { UserList } from "./pages/users/UserList";
 
+// Phase 2 - Enhanced Order Management
+import { OrderList } from "./pages/orders/OrderList";
+import { OrderDetails } from "./pages/orders/OrderDetails";
+
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,8 +79,9 @@ export const App: React.FC = () => {
               <Route path="subcategories" element={<SubcategoryList/>} />
               <Route path="subcategories/add" element={<AddSubcategory/>} />
               
-              {/* Orders route */}
-              <Route path="orders" element={<InquiryList />} />
+              {/* Orders routes - Phase 2 Enhanced */}
+              <Route path="orders" element={<OrderList />} />
+              <Route path="orders/:id" element={<OrderDetails />} />
               
               {/* Workshop routes */}
               <Route path="class-registration" element={<WorkshopsList />} />
